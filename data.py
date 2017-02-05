@@ -23,11 +23,19 @@ class DataProvider:
     def pre_process(self):
         files = listdir(self.path)
         for file in files:
-            file = "".join([self.path, file])
-            self.count_sentences(file)
+            if file[0:4] == "news":
+                file = "".join([self.path, file])
+                self.count_sentences(file)
+        print("process sentence")
         for file in files:
-            file = "".join([self.path, file])
-            self.process_sent(file)
+            if file[0:4] == "news":
+                file = "".join([self.path, file])
+                self.process_sent(file)
+                print(file)
+        print("process data")
+        # np.save("".join([self.path, "data"]), self.data)
+        # np.save("".join([self.path, "idx2word"]), self.idx2word)
+        # np.save("".join([self.path, "word2idx"]), self.word2idx)
 
 
     def count_sentences(self, path):
@@ -36,9 +44,6 @@ class DataProvider:
             for sent in sent_tokenize(line):
                 words = word_tokenize(sent)
                 self.max_sent_len = max(len(words), self.max_sent_len)
-        np.save("".join([self.path, "data"]), self.data)
-        np.save("".join([self.path, "idx2word"]), self.idx2word)
-        np.save("".join([self.path, "word2idx"]), self.word2idx)
 
     def process_sent(self, path):
         f = open(path, "r")
@@ -52,8 +57,8 @@ class DataProvider:
                         self.word2idx[word] = len(self.word2idx)
                         self.idx2word.append(word)
                     data_cur.append(self.word2idx[word])
-                    while len(data_cur) < self.max_sent_len:
-                        data_cur.append(0)
+                while len(data_cur) < self.max_sent_len:
+                    data_cur.append(0)
                 self.data.append(data_cur)
 
     def get_data(self):

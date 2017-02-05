@@ -8,11 +8,15 @@ from keras.callbacks import ModelCheckpoint
 
 data = DataProvider(batch_size=100)
 
+
+
 embed_dim = 200
-vocab_size = len(data.idx2word)
+vocab_size = 1 + len(data.idx2word)
 sen_len = data.max_sent_len
 word_embed_data = np.random.rand(vocab_size, embed_dim)
 
+print("vocab size: ", vocab_size)
+print("padding sent len: ", data.max_sent_len)
 
 words_input_pos = Input(shape=(sen_len,), dtype="int32", name="words_input_pos")
 words_input_neg = Input(shape=(sen_len,), dtype="int32", name="words_input_neg")
@@ -50,8 +54,10 @@ model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
 model.compile(optimizer=Adam(lr=0.001), loss = hinge_loss)
 print(model.summary())
 
-model.fit_generator(generator=data.get_data(), nb_worker=5, pickle_safe=True,
+log_path = "".join([data.path, "log"])
+
+model.fit_generator(generator=data.get_data(), nb_worker=1, pickle_safe=True,
                     nb_epoch=100, samples_per_epoch=100,
                     callbacks=[
-                        ModelCheckpoint(filepath=data.path, verbose=1, save_best_only=False)
+                        ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
                     ])
