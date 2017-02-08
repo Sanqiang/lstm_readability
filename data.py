@@ -17,9 +17,21 @@ class DataProvider:
         self.word2idx = {"<UNK>": 0}
         self.idx2word = ["<UNK>"]
         self.data = []
-        self.pre_process()
+        # self.pre_process()
+
+        self.path = "".join([home, "/data/yelp/review.json"])
+        self.path_word = "".join([home, "/data/yelp/word.dict"])
+        self.path_doc = "".join([home, "/data/yelp/data.txt"])
+
+    def populate_data(self):
+        f = open(self.path_doc, "r")
+        data_cur = []
+        for line in f:
+            words = line.split()
+            self.data.append([int(word) for word in words])
 
 
+    '''
     def pre_process(self):
         files = listdir(self.path)
         for file in files:
@@ -36,15 +48,12 @@ class DataProvider:
         # np.save("".join([self.path, "data"]), self.data)
         # np.save("".join([self.path, "idx2word"]), self.idx2word)
         # np.save("".join([self.path, "word2idx"]), self.word2idx)
-
-
     def count_sentences(self, path):
         f = open(path, "r")
         for line in f:
             for sent in sent_tokenize(line):
                 words = word_tokenize(sent)
                 self.max_sent_len = max(len(words), self.max_sent_len)
-
     def process_sent(self, path):
         f = open(path, "r")
         for line in f:
@@ -57,9 +66,8 @@ class DataProvider:
                         self.word2idx[word] = len(self.word2idx)
                         self.idx2word.append(word)
                     data_cur.append(self.word2idx[word])
-                while len(data_cur) < self.max_sent_len:
-                    data_cur.append(0)
                 self.data.append(data_cur)
+    '''
 
     def get_data(self):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
@@ -69,7 +77,8 @@ class DataProvider:
         while True:
             random.shuffle(self.data)
             for sent in self.data:
-                words_input_pos[batch_idx,] = sent
+                for i in range(len(sent)):
+                    words_input_pos[batch_idx, i] = sent[i]
 
                 for i in range(self.max_sent_len):
                     word = random.randint(1, len(self.idx2word))
@@ -86,10 +95,39 @@ class DataProvider:
                     words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
                     batch_idx = 0
 
+    # deprecated
+    def temp_yelp(self):
+        import json
+        f = open(self.path, "r")
+        data = ""
+        for line in f:
+            obj = json.loads(line)
+            text = obj["text"]
+            for sent in sent_tokenize(text):
+                data_cur = ""
+                words = word_tokenize(sent)
+                self.max_sent_len = max(self.max_sent_len, len(words))
+                for word in words:
+                    word = self.stemmer.stem(word)
+                    if word not in self.word2idx:
+                        self.word2idx[word] = len(self.word2idx)
+                        self.idx2word.append(word)
+                    data_cur = " ".join([data_cur, word])
+            data = "\n".join([data, data_cur])
 
+        f_doc = open(self.path_doc, "w")
+        f_doc.write(data)
+        f_doc.close()
+        word_list = ""
+        for word in self.idx2word:
+            word_list = "\n".join([word_list, word])
+        f_word = open(self.path_word, "w")
+        f_word.write(word_list)
+        f_word.close()
 
+        print(self.max_sent_len)
 
-
-
-
+if __name__ == '__main__':
+    ddd = DataProvider(0)
+    ddd.temp_yelp()
 
