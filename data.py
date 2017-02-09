@@ -10,8 +10,8 @@ home = os.environ["HOME"]
 class DataProvider:
     def __init__(self, batch_size):
         self.batch_size = batch_size
-        self.path = "".join([home,
-                             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/"])
+        #self.path = "".join([home,
+        #                     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/"])
         self.max_sent_len = 0
         self.stemmer = SnowballStemmer("english")
         self.word2idx = {"<UNK>": 0}
@@ -20,8 +20,8 @@ class DataProvider:
         # self.pre_process()
 
         self.path = "".join([home, "/data/yelp/review.json"])
-        self.path_word = "".join([home, "/data/yelp/word.dict"])
-        self.path_doc = "".join([home, "/data/yelp/data.txt"])
+        self.path_word = "".join([home, "/data/yelp/processed/word.dict"])
+        self.path_doc = "".join([home, "/data/yelp/processed/data.txt"])
 
     def populate_data(self):
         f = open(self.path_doc, "r")
@@ -99,6 +99,7 @@ class DataProvider:
     def temp_yelp(self):
         import json
         f = open(self.path, "r")
+        f_doc = open(self.path_doc, "w")
         data = ""
         for line in f:
             obj = json.loads(line)
@@ -112,10 +113,13 @@ class DataProvider:
                     if word not in self.word2idx:
                         self.word2idx[word] = len(self.word2idx)
                         self.idx2word.append(word)
-                    data_cur = " ".join([data_cur, word])
+                    data_cur = " ".join([data_cur, str(self.word2idx[word])])
             data = "\n".join([data, data_cur])
+            if len(data) >= 100000:
+                f_doc.write(data)
+                data = ""
 
-        f_doc = open(self.path_doc, "w")
+
         f_doc.write(data)
         f_doc.close()
         word_list = ""
@@ -125,7 +129,7 @@ class DataProvider:
         f_word.write(word_list)
         f_word.close()
 
-        print(self.max_sent_len)
+        print(self.max_sent_len) #787
 
 if __name__ == '__main__':
     ddd = DataProvider(0)
