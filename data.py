@@ -92,14 +92,14 @@ class DataProvider:
             text = obj["text"]
             for sent in sent_tokenize(text):
                 data_cur = ""
-                words = word_tokenize(sent)
-                self.max_sent_len = max(self.max_sent_len, len(words))
-                for word in words:
-                    word = self.word_transform(word)
-                    if word not in word2idx:
-                        word2idx[word] = len(word2idx)
-                        idx2word.append(word)
-                    data_cur = " ".join([data_cur, str(word2idx[word])])
+                wordidxs = word_tokenize(sent)
+                self.max_sent_len = max(self.max_sent_len, len(wordidxs))
+                for wordidx in wordidxs:
+                    wordidx = self.word_transform(wordidx)
+                    if wordidx not in word2idx:
+                        word2idx[wordidx] = len(word2idx)
+                        idx2word.append(wordidx)
+                    data_cur = " ".join([data_cur, str(word2idx[wordidx])])
             data = "\n".join([data, data_cur])
             if len(data) >= 100000:
                 f_doc.write(data)
@@ -110,12 +110,17 @@ class DataProvider:
 
         print(self.max_sent_len) #787
 
+
+        # refine
+
         f_doc = open(self.path_doc, "r")
-        word_cnt = {}
+        wordidx_cnt = {}
         for line in f_doc:
-            words = line.split()
-            for word in words:
-                word_cnt[word] += 1
+            wordidxs = line.split()
+            for wordidx in wordidxs:
+                if wordidx not in wordidx_cnt:
+                    wordidx_cnt[wordidx] = 0
+                wordidx_cnt[wordidx] += 1
         f_doc = open(self.path_doc, "r")
         data = ""
         f_doc2 = open(self.path_doc2, "w")
@@ -123,12 +128,15 @@ class DataProvider:
         nidx2word = ["<UNK>"]
         for line in f_doc:
             data_cur = ""
-            words = line.split()
-            for word in words:
-                if word_cnt[word] >= 3:
-                    data_cur = " ".join([data_cur, word])
-                    nword2idx[idx2word[word]] = len(nword2idx)
-                    nidx2word.append(idx2word[word])
+            wordidxs = line.split()
+            for wordidx in wordidxs:
+                if wordidx_cnt[wordidx] >= 3:
+                    if wordidx not in nword2idx:
+                        nword2idx[idx2word[int(wordidx)]] = len(nword2idx)
+                        nidx2word.append(idx2word[int(wordidx)])
+                    nwordidx = nword2idx[idx2word[int(wordidx)]]
+                    data_cur = " ".join([data_cur, nwordidx])
+
 
             data = "\n".join([data, data_cur])
             if len(data) >= 100000:
@@ -138,8 +146,8 @@ class DataProvider:
         f_doc2.close()
 
         word_list = ""
-        for word in nidx2word:
-            word_list = "\n".join([word_list, word])
+        for wordidx in nidx2word:
+            word_list = "\n".join([word_list, wordidx])
         f_word = open(self.path_word, "w")
         f_word.write(word_list)
         f_word.close()
