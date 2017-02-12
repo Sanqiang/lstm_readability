@@ -7,8 +7,10 @@ from keras.layers import *
 from keras.optimizers import *
 from data import DataProvider
 from keras.callbacks import ModelCheckpoint
+import os
 
 tag = "test"
+os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
 data = DataProvider(batch_size=1000)
 
@@ -27,7 +29,7 @@ def get_sim(x):
 
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
                        weights=[word_embed_data])
-lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="cpu", input_length=data.max_sent_len)
+lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="gpu", input_length=data.max_sent_len)
 sim_layer = Lambda(function=get_sim, name="output_layer", output_shape=(sen_len, sen_len))
 
 words_embed_pos = word_layer(words_input_pos)
@@ -44,7 +46,7 @@ def hinge_loss(y_true, y_pred):
 
 
 model = Model(input=[words_input_pos], output=[pos_sim])
-model.compile(optimizer=Adam(lr=0.001), loss=hinge_loss)
+model.compile(optimizer=Adam(lr=0.0001), loss=hinge_loss)
 print(model.summary())
 
 log_path = "".join([data.path,tag, "log"])

@@ -6,6 +6,10 @@ from keras.layers import *
 from keras.optimizers import *
 from data import DataProvider
 from keras.callbacks import ModelCheckpoint
+import os
+
+tag = "test"
+os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
 data = DataProvider(batch_size=100)
 
@@ -28,7 +32,7 @@ def merge_sim(x):
 
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
                        weights=[word_embed_data])
-lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="cpu", input_length=data.max_sent_len)
+lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="gpu", input_length=data.max_sent_len)
 sim_layer = Lambda(function=get_sim, name="sim_layer")
 merge_layer = Lambda(function=merge_sim, name="output_layer")
 
@@ -53,7 +57,7 @@ model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
 model.compile(optimizer=Adam(lr=0.001), loss=hinge_loss)
 print(model.summary())
 
-log_path = "".join([data.path, "log"])
+log_path = "".join([data.path,tag, "log"])
 
 model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
                     nb_epoch=10000, samples_per_epoch=10000,
