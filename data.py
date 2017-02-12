@@ -4,6 +4,7 @@ import os
 from os import listdir
 import numpy as np
 import random
+from collections import Counter
 
 home = os.environ["HOME"]
 
@@ -18,13 +19,23 @@ class DataProvider:
         self.idx2word = ["<UNK>"]
         self.data = []
 
-        self.path = "".join([home, "/data/yelp/review.json"])
-        self.path_word = "".join([home, "/data/yelp/processed/word.dict"])
-        self.path_doc = "".join([home, "/data/yelp/processed/data.txt"])
-        self.path_doc2 = "".join([home, "/data/yelp/processed/data2.txt"])
+        # self.path = "".join([home, "/data/yelp/review.json"])
+        # self.path_word = "".join([home, "/data/yelp/processed/word.dict"])
+        # self.path_doc = "".join([home, "/data/yelp/processed/data.txt"])
+        # self.path_doc2 = "".join([home, "/data/yelp/processed/data2.txt"])
+        #
+        self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
+        self.path_news_doc = "".join([home,
+             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data3.txt"])
+        self.path_news_dict = "".join([home,
+            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict3.txt"])
 
-        # self.populate_dict()
-        # self.populate_data()
+        self.path = self.path_news
+        self.path_word = self.path_news_dict
+        self.path_doc = self.path_news_doc
+
+        self.populate_dict()
+        self.populate_data()
 
     def populate_dict(self):
         f = open(self.path_word, "r")
@@ -35,9 +46,13 @@ class DataProvider:
 
     def populate_data(self):
         f = open(self.path_doc, "r")
+        ll = 0
         for line in f:
             words = line.split()
             self.data.append([int(word) for word in words])
+            ll += 1
+            if ll == 100:
+                break
 
     def get_data(self, include_negative):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
@@ -61,26 +76,26 @@ class DataProvider:
                             word = random.randint(1, len(self.idx2word))
                         words_input_neg[batch_idx, i] = word
 
-                    batch_idx += 1
+                batch_idx += 1
 
                 if batch_idx == self.batch_size:
                     if include_negative:
                         yield ({"words_input_pos": words_input_pos, "words_input_neg": words_input_neg},
-                               {"merge_layer": pseudo_output})
+                               {"output_layer": pseudo_output})
                     else:
                         yield ({"words_input_pos": words_input_pos},
-                               {"merge_layer": pseudo_output[:,:,0]})
+                               {"output_layer": pseudo_output})
                     words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
                     words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
                     batch_idx = 0
 
     def word_transform(self, word):
         word = word.lower()
-        word = self.stemmer.stem(word)
-
-        for i in range(len(word)):
-            if word[i] < 'a' or word[i] > 'z':
-                return "<UNK>"
+        # word = self.stemmer.stem(word)
+        #
+        # for i in range(len(word)):
+        #     if word[i] < 'a' or word[i] > 'z':
+        #         return "<UNK>"
         return word
 
     # deprecated
@@ -117,7 +132,6 @@ class DataProvider:
 
 
         # refine
-
         f_doc = open(self.path_doc, "r")
         wordidx_cnt = {}
         for line in f_doc:
@@ -157,8 +171,63 @@ class DataProvider:
         f_word.write(word_list)
         f_word.close()
 
+    def temp_news(self):
+        word2cnt = Counter()
+
+        files = os.listdir(self.path_news)
+        for file in files:
+            if file[0:4] != "news":
+                continue
+            file = "/".join([self.path_news, file])
+            for line in open(file, "r"):
+                words = line.split()
+                for word in words:
+                    word = self.word_transform(word)
+                    if word not in word2cnt:
+                        word2cnt[word] = 0
+                    word2cnt[word] += 1
+            print("finished", file)
+        print("finish word count", str(len(word2cnt)))
+        nword2cnt = {}
+        for word in word2cnt:
+            if word2cnt[word] > 5:
+                nword2cnt[word] = word2cnt[word]
+        word2cnt = nword2cnt
+        print("current word count", str(len(word2cnt)))
+        f = open(self.path_news_doc, "w")
+        data = ""
+        for file in files:
+            if file[0:4] != "news":
+                continue
+            file = "/".join([self.path_news, file])
+            for line in open(file, "r"):
+                cur_line = ""
+                words = line.split()
+                for word in words:
+                    word = self.word_transform(word)
+                    if word in word2cnt:
+                        if word not in self.word2idx:
+                            self.word2idx[word] = len(self.word2idx)
+                            self.idx2word.append(word)
+                    else:
+                        word = "<UNK>"
+                    cur_line = " ".join((cur_line, str(self.word2idx[word])))
+                data = "\n".join((data, cur_line))
+                if len(data) > 100000:
+                    f.write(data)
+                    data = ""
+            print("finished", file)
+        f.write(data)
+        f.close()
+
+        f = open(self.path_news_dict, "w")
+        for word in self.idx2word:
+            f.write(word)
+            f.write("\n")
+        f.close()
+
 
 if __name__ == '__main__':
     ddd = DataProvider(0)
-    ddd.temp_yelp()
-
+    # ddd.temp_yelp()
+    ddd.temp_news()

@@ -8,7 +8,9 @@ from keras.optimizers import *
 from data import DataProvider
 from keras.callbacks import ModelCheckpoint
 
-data = DataProvider(batch_size=100)
+tag = "test"
+
+data = DataProvider(batch_size=1000)
 
 embed_dim = 200
 vocab_size = 1 + len(data.idx2word)
@@ -26,7 +28,7 @@ def get_sim(x):
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
                        weights=[word_embed_data])
 lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="cpu", input_length=data.max_sent_len)
-sim_layer = Lambda(function=get_sim, name="output_layer")
+sim_layer = Lambda(function=get_sim, name="output_layer", output_shape=(sen_len, sen_len))
 
 words_embed_pos = word_layer(words_input_pos)
 lstm_embed = lstm_layer(words_embed_pos)
@@ -45,10 +47,10 @@ model = Model(input=[words_input_pos], output=[pos_sim])
 model.compile(optimizer=Adam(lr=0.001), loss=hinge_loss)
 print(model.summary())
 
-log_path = "".join([data.path, "log"])
+log_path = "".join([data.path,tag, "log"])
 
 model.fit_generator(generator=data.get_data(include_negative=False), nb_worker=1, pickle_safe=True,
-                    nb_epoch=10000, samples_per_epoch=10000,
+                    nb_epoch=100000, samples_per_epoch=1000,
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
                     ])
