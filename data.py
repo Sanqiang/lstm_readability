@@ -39,7 +39,7 @@ class DataProvider:
             words = line.split()
             self.data.append([int(word) for word in words])
 
-    def get_data(self):
+    def get_data(self, include_negative):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
         words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
         pseudo_output = np.zeros((self.batch_size, self.max_sent_len, 2))
@@ -52,19 +52,24 @@ class DataProvider:
                         break
                     words_input_pos[batch_idx, i] = sent[i]
 
-                for i in range(self.max_sent_len):
-                    if i >= self.max_sent_len:
-                        break
-                    word = random.randint(1, len(self.idx2word))
-                    while word in sent:
+                if include_negative:
+                    for i in range(self.max_sent_len):
+                        if i >= self.max_sent_len:
+                            break
                         word = random.randint(1, len(self.idx2word))
-                    words_input_neg[batch_idx, i] = word
+                        while word in sent:
+                            word = random.randint(1, len(self.idx2word))
+                        words_input_neg[batch_idx, i] = word
 
-                batch_idx += 1
+                    batch_idx += 1
 
                 if batch_idx == self.batch_size:
-                    yield ({"words_input_pos": words_input_pos, "words_input_neg": words_input_neg},
-                           {"merge_layer": pseudo_output})
+                    if include_negative:
+                        yield ({"words_input_pos": words_input_pos, "words_input_neg": words_input_neg},
+                               {"merge_layer": pseudo_output})
+                    else:
+                        yield ({"words_input_pos": words_input_pos},
+                               {"merge_layer": pseudo_output[:,:,0]})
                     words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
                     words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
                     batch_idx = 0
@@ -135,7 +140,7 @@ class DataProvider:
                         nword2idx[idx2word[int(wordidx)]] = len(nword2idx)
                         nidx2word.append(idx2word[int(wordidx)])
                     nwordidx = nword2idx[idx2word[int(wordidx)]]
-                    data_cur = " ".join([data_cur, nwordidx])
+                    data_cur = " ".join([data_cur, str(nwordidx)])
 
 
             data = "\n".join([data, data_cur])

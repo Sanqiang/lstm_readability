@@ -1,4 +1,5 @@
-# this model consider one positive and negative input data
+# this model only consider positive example
+
 from keras.models import Model
 from keras.layers.recurrent import *
 from keras.layers.embeddings import *
@@ -18,44 +19,35 @@ print("vocab size: ", vocab_size)
 print("padding sent len: ", data.max_sent_len)
 
 words_input_pos = Input(shape=(sen_len,), dtype="int32", name="words_input_pos")
-words_input_neg = Input(shape=(sen_len,), dtype="int32", name="words_input_neg")
 
 def get_sim(x):
     return K.batch_dot(x[0], x[1], axes=2)
 
-def merge_sim(x):
-    return K.concatenate(x, axis=2)
-
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
                        weights=[word_embed_data])
 lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="cpu", input_length=data.max_sent_len)
-sim_layer = Lambda(function=get_sim, name="sim_layer")
-merge_layer = Lambda(function=merge_sim, name="output_layer")
+sim_layer = Lambda(function=get_sim, name="output_layer")
 
 words_embed_pos = word_layer(words_input_pos)
-words_embed_neg = word_layer(words_input_neg)
 lstm_embed = lstm_layer(words_embed_pos)
 pos_sim = sim_layer([lstm_embed, words_embed_pos])
-neg_sim = sim_layer([lstm_embed, words_embed_neg])
-merge_embed = merge_layer([pos_sim, neg_sim])
 
 
 def hinge_loss(y_true, y_pred):
     loss = sen_len
     for i in range(sen_len):
         loss -= y_pred[:, i, i]
-        loss += y_pred[:, i, i+sen_len]
     loss = K.mean(K.maximum(loss, 0.0))
     return loss
 
 
-model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
+model = Model(input=[words_input_pos], output=[pos_sim])
 model.compile(optimizer=Adam(lr=0.001), loss=hinge_loss)
 print(model.summary())
 
 log_path = "".join([data.path, "log"])
 
-model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
+model.fit_generator(generator=data.get_data(include_negative=False), nb_worker=1, pickle_safe=True,
                     nb_epoch=10000, samples_per_epoch=10000,
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
