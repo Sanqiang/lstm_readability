@@ -46,13 +46,9 @@ class DataProvider:
 
     def populate_data(self):
         f = open(self.path_doc, "r")
-        ll = 0
         for line in f:
             words = line.split()
             self.data.append([int(word) for word in words])
-            ll += 1
-            if ll == 100:
-                break
 
     def get_data(self, include_negative):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
