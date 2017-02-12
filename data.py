@@ -40,9 +40,12 @@ class DataProvider:
     def populate_dict(self):
         f = open(self.path_word, "r")
         for line in f:
-            word = line.strip()
-            self.word2idx[word] = len(self.word2idx)
-            self.idx2word.append(word)
+            words = line.split()
+            for word in words:
+                word = line.strip()
+                if word not in self.word2idx:
+                    self.word2idx[word] = len(self.word2idx)
+                    self.idx2word.append(word)
 
     def populate_data(self):
         f = open(self.path_doc, "r")
