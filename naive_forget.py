@@ -101,7 +101,7 @@ for category in obj:
             data_sy.append(int(label))
 
 
-            forget_data = "\n".join([line , forget_line])
+            forget_data = "\n".join([forget_data , forget_line])
 
         if len(forget_data) > 100000:
             forget_gate_f.write(forget_data)
