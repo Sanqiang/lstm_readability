@@ -11,7 +11,7 @@ import os
 tag = "test"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
-data = DataProvider(batch_size=100)
+data = DataProvider(batch_size=500)
 
 embed_dim = 200
 vocab_size = 1 + len(data.idx2word)
@@ -54,13 +54,13 @@ def hinge_loss(y_true, y_pred):
 
 
 model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
-model.compile(optimizer=Adam(lr=0.001), loss=hinge_loss)
+model.compile(optimizer=Adam(lr=0.0001), loss=hinge_loss)
 print(model.summary())
 
 log_path = "".join([data.path,tag, "log"])
 
 model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
-                    nb_epoch=10000, samples_per_epoch=10000,
+                    nb_epoch=10000, samples_per_epoch=30301028, validation_data=data.get_data(include_negative=False, random_pick=True),
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
                     ])

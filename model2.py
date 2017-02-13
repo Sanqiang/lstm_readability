@@ -52,7 +52,7 @@ print(model.summary())
 log_path = "".join([data.path,tag, "log"])
 
 model.fit_generator(generator=data.get_data(include_negative=False), nb_worker=1, pickle_safe=True,
-                    nb_epoch=100000, samples_per_epoch=1000,
+                    nb_epoch=100000, samples_per_epoch=30301028, validation_data=data.get_data(include_negative=False, random_pick=True),
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
                     ])
