@@ -41,111 +41,143 @@ def compareVector(vec1, vec2):
 
     return sim
 
-#data
-path_data = "".join([home, "/data/newsela/news3.txt"])
-handler = open(path_data, "r")
-obj = json.load(handler)
-data_x = {}
-data_x2 = {}
-data_y = {}
-data_sx = []
-data_sy = []
-data_sx2 = []
-for category in obj:
-    category_clean = category.strip()
-    if category_clean not in data_x:
-        print(category_clean)
-        data_x[category_clean] = []
-        data_x2[category_clean] = []
-        data_y[category_clean] = []
-
-    data_entries = obj[category]
-    for data_entry in data_entries:
-        for label in data_entry:
-            text = data_entry[label]
-
-            text = [word_tokenize(sent) for sent in sent_tokenize(text)]
-            #avg sen
-            word_per_sent = 0
-            for sent in text:
-                word_per_sent += len(sent)
-            word_per_sent /= len(text)
-            data_x[category_clean].append((word_per_sent, word_per_sent))
-            data_sx.append((word_per_sent, word_per_sent))
-
-            seg_per_sent = 0
-            for sent in text:
-                for i in range(1, len(sent)):
-                    word = sent[i]
-                    word_pre = sent[i - 1]
-                    if word not in glove_vector or word_pre not in glove_vector or compareVector(glove_vector[word], glove_vector[word_pre]) < .5:
-                        seg_per_sent += 1
-            seg_per_sent /= len(text)
-            data_x2[category_clean].append((seg_per_sent, seg_per_sent))
-            data_sx2.append((seg_per_sent, seg_per_sent))
-
-            data_y[category_clean].append(int(label))
-            data_sy.append(int(label))
+thresholds = [.1, .2, .3, .4, .5 ,.6, .7, .8,.9]
 
 
 
-f_data_x2 = open("data_x2", "wb")
-pickle.dump(data_x2, f_data_x2)
+for threshold in thresholds:
 
-f_data_sx2 = open("data_sx2", "wb")
-pickle.dump(data_sx2, f_data_sx2)
+    record_forget = False
+    if not os.path.exists("forget.txt"):
+        forget_gate_f = open("forget.txt", "w")
+        forget_data = ""
+        record_forget = True
 
-f_data_x = open("data_x", "wb")
-pickle.dump(data_x, f_data_x)
+    #data
+    path_data = "".join([home, "/data/newsela/news3.txt"])
+    handler = open(path_data, "r")
+    obj = json.load(handler)
+    data_x = {}
+    data_x2 = {}
+    data_y = {}
+    data_sx = []
+    data_sy = []
+    data_sx2 = []
+    for category in obj:
+        category_clean = category.strip()
+        if category_clean not in data_x:
+            print(category_clean)
+            data_x[category_clean] = []
+            data_x2[category_clean] = []
+            data_y[category_clean] = []
 
-f_data_sx = open("data_sx", "wb")
-pickle.dump(data_sx, f_data_sx)
+        data_entries = obj[category]
+        for data_entry in data_entries:
+            for label in data_entry:
 
-f_data_y = open("data_y", "wb")
-pickle.dump(data_y, f_data_y)
+                if record_forget:
+                    forget_line = ""
 
-f_data_sy = open("data_sy", "wb")
-pickle.dump(data_sy, f_data_sy)
+                text = data_entry[label]
 
-result = open("result.5.txt", "a")
+                text = [word_tokenize(sent) for sent in sent_tokenize(text)]
+                #avg sen
+                word_per_sent = 0
+                for sent in text:
+                    word_per_sent += len(sent)
+                word_per_sent /= len(text)
+                data_x[category_clean].append((word_per_sent, word_per_sent))
+                data_sx.append((word_per_sent, word_per_sent))
 
-reg = linear_model.Ridge(alpha = 1.0)
-scores = cross_val_score(reg, np.array(data_sx), np.array(data_sy), cv=10, n_jobs=-1, verbose=0)
-score = reduce(lambda x, y: x + y, scores) / len(scores)
-result.write("ave sen \t")
-result.write(str(score))
-result.write("\n")
+                seg_per_sent = 0
+                for sent in text:
+                    for i in range(1, len(sent)):
+                        word = sent[i]
+                        word_pre = sent[i - 1]
 
-scores = cross_val_score(reg, data_sx2, data_sy, cv=10, n_jobs=-1, verbose=0)
-score = reduce(lambda x, y: x + y, scores) / len(scores)
-result.write("ave seg \t")
-result.write(str(score))
-result.write("\n")
+                        gate = 0
+                        if record_forget and word in glove_vector and word_pre in glove_vector:
+                            gate = compareVector(glove_vector[word], glove_vector[word_pre])
+                            forget_line = " ".join([forget_line, str(gate)])
 
-result.write("==================================================\n")
+                        if word not in glove_vector or word_pre not in glove_vector or compareVector(glove_vector[word], glove_vector[word_pre]) < threshold:
+                            seg_per_sent += 1
+                seg_per_sent /= len(text)
+                data_x2[category_clean].append((seg_per_sent, seg_per_sent))
+                data_sx2.append((seg_per_sent, seg_per_sent))
 
-for origin_category in data_x:
-    for target_category in data_x:
-        result.write("from\t")
-        result.write(origin_category)
-        result.write("\tto\t")
-        result.write(target_category)
-        result.write("\n")
+                data_y[category_clean].append(int(label))
+                data_sy.append(int(label))
 
-        reg = linear_model.Ridge(alpha=1.0)
-        reg.fit(data_x[origin_category], data_y[origin_category])
-        score = reg.score(data_x[target_category], data_y[target_category])
-        result.write("ave sen \t")
-        result.write(str(score))
-        result.write("\n")
+                if record_forget:
+                    forget_data = "\n".join([line , forget_line])
 
-        reg.fit(data_x2[origin_category], data_y[origin_category])
-        score = reg.score(data_x2[target_category], data_y[target_category])
-        result.write("ave seg \t")
-        result.write(str(score))
-        result.write("\n")
+            if record_forget and len(forget_data) > 100000:
+                forget_gate_f.write(forget_data)
+                forget_data = ""
 
-        result.write("==================================================\n")
+    if record_forget:
+        forget_gate_f.write(forget_data)
+
+
+    f_data_x2 = open("data_x2", "wb")
+    pickle.dump(data_x2, f_data_x2)
+
+    f_data_sx2 = open("data_sx2", "wb")
+    pickle.dump(data_sx2, f_data_sx2)
+
+    f_data_x = open("data_x", "wb")
+    pickle.dump(data_x, f_data_x)
+
+    f_data_sx = open("data_sx", "wb")
+    pickle.dump(data_sx, f_data_sx)
+
+    f_data_y = open("data_y", "wb")
+    pickle.dump(data_y, f_data_y)
+
+    f_data_sy = open("data_sy", "wb")
+    pickle.dump(data_sy, f_data_sy)
+
+    file = "".join(["result.", str(threshold), ".txt"])
+    result = open(file, "a")
+
+    reg = linear_model.Ridge(alpha = 1.0)
+    scores = cross_val_score(reg, np.array(data_sx), np.array(data_sy), cv=10, n_jobs=-1, verbose=0)
+    score = reduce(lambda x, y: x + y, scores) / len(scores)
+    result.write("ave sen \t")
+    result.write(str(score))
+    result.write("\n")
+
+    scores = cross_val_score(reg, data_sx2, data_sy, cv=10, n_jobs=-1, verbose=0)
+    score = reduce(lambda x, y: x + y, scores) / len(scores)
+    result.write("ave seg \t")
+    result.write(str(score))
+    result.write("\n")
+
+    result.write("==================================================\n")
+
+    for origin_category in data_x:
+        for target_category in data_x:
+            result.write("from\t")
+            result.write(origin_category)
+            result.write("\tto\t")
+            result.write(target_category)
+            result.write("\n")
+
+            reg = linear_model.Ridge(alpha=1.0)
+            reg.fit(data_x[origin_category], data_y[origin_category])
+            score = reg.score(data_x[target_category], data_y[target_category])
+            result.write("ave sen \t")
+            result.write(str(score))
+            result.write("\n")
+
+            reg.fit(data_x2[origin_category], data_y[origin_category])
+            score = reg.score(data_x2[target_category], data_y[target_category])
+            result.write("ave seg \t")
+            result.write(str(score))
+            result.write("\n")
+
+            result.write("==================================================\n")
 
 
 
