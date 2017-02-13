@@ -42,7 +42,7 @@ def compareVector(vec1, vec2):
 
     return sim
 
-forget_gate_f = open("forget.txt", "w")
+forget_gate_f = open("forget_label.txt", "w")
 forget_data = ""
 
 #data
@@ -100,7 +100,7 @@ for category in obj:
             data_y[category_clean].append(int(label))
             data_sy.append(int(label))
 
-
+            forget_line = "\t".join([forget_line, label, category])
             forget_data = "\n".join([forget_data , forget_line])
 
         if len(forget_data) > 100000:
