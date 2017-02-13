@@ -22,7 +22,7 @@ K.set_session(session)
 data = DataProvider(batch_size=500)
 
 embed_dim = 200
-vocab_size = 1 + len(data.idx2word)
+vocab_size = len(data.idx2word)
 sen_len = data.max_sent_len
 word_embed_data = np.random.rand(vocab_size, embed_dim)
 
