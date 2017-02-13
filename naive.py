@@ -7,6 +7,7 @@ from sklearn.model_selection import cross_val_score
 from functools import reduce
 import pickle
 import numpy as np
+import math
 
 
 home = os.environ["HOME"]
@@ -23,7 +24,22 @@ print(len(glove_vector))
 #utility
 
 def compareVector(vec1, vec2):
-    return sum([(vec1[i] - vec2[i])**2 for i in range(len(vec1))])
+    #norm
+    norm_vec1 = 0.0
+    for val in vec1:
+        norm_vec1 += val * val
+    norm_vec1 = math.sqrt(norm_vec1)
+
+    norm_vec2 = 0.0
+    for val in vec2:
+        norm_vec2 += val * val
+    norm_vec2 = math.sqrt(norm_vec2)
+
+    sim = 0
+    for i in range(len(vec1)):
+        sim += (vec1[i]/norm_vec1) * (vec2[i]/norm_vec2)
+
+    return sim
 
 #data
 path_data = "".join([home, "/data/newsela/news3.txt"])
@@ -91,16 +107,16 @@ pickle.dump(data_y, f_data_y)
 f_data_sy = open("data_sy", "wb")
 pickle.dump(data_sy, f_data_sy)
 
-result = open("result.txt", "a")
+result = open("result.5.txt", "a")
 
 reg = linear_model.Ridge(alpha = 1.0)
-scores = cross_val_score(reg, np.array(data_sx), np.array(data_sy), cv=10, n_jobs=1, verbose=0)
+scores = cross_val_score(reg, np.array(data_sx), np.array(data_sy), cv=10, n_jobs=-1, verbose=0)
 score = reduce(lambda x, y: x + y, scores) / len(scores)
 result.write("ave sen \t")
 result.write(str(score))
 result.write("\n")
 
-scores = cross_val_score(reg, data_sx2, data_sy, cv=10, n_jobs=1, verbose=0)
+scores = cross_val_score(reg, data_sx2, data_sy, cv=10, n_jobs=-1, verbose=0)
 score = reduce(lambda x, y: x + y, scores) / len(scores)
 result.write("ave seg \t")
 result.write(str(score))
