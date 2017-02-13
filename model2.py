@@ -13,7 +13,7 @@ import tensorflow as tf
 tag = "test"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
-config = tf.ConfigProto()
+config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 K.set_session(session)
@@ -35,7 +35,7 @@ for line in open(glove_path, encoding="utf-8"):
     item = line.split()
     glove_vector[item[0].lower()] = [float(val) for val in item[1:]]
 
-for idx in range(len(vocab_size)):
+for idx in range(vocab_size):
     word = data.idx2word[idx]
     if word in glove_vector:
         word_embed_data[idx, :] = glove_vector[word]
