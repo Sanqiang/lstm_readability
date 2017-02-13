@@ -5,11 +5,14 @@ from os import listdir
 import numpy as np
 import random
 from collections import Counter
+from collections import deque
 
 home = os.environ["HOME"]
 
 class DataProvider:
-    def __init__(self, batch_size):
+    def __init__(self, batch_size, cor_matrix_flag = False):
+        self.cor_matrix_flag = cor_matrix_flag
+
         self.batch_size = batch_size
         #self.path = "".join([home,
         #                     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/"])
@@ -48,10 +51,22 @@ class DataProvider:
                     self.idx2word.append(word)
 
     def populate_data(self):
+        if self.cor_matrix_flag:
+            self.cor_matrix = np.full(len(self.idx2word), len(self.idx2word), fill_value=False, dtype=np.bool)
+
         f = open(self.path_doc, "r")
         for line in f:
             words = line.split()
             self.data.append([int(word) for word in words])
+            if self.cor_matrix_flag:
+                dq = deque(maxlen=10)
+                for word in words:
+                    word_idx = self.word2idx[word]
+                    dq.append(word_idx)
+                    for loop_word_idx in dq:
+                        self.cor_matrix[word_idx, loop_word_idx] = True
+                        self.cor_matrix[loop_word_idx, word_idx] = True
+
 
     def get_data(self, include_negative, random_pick = False):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
@@ -71,14 +86,23 @@ class DataProvider:
                     words_input_pos[batch_idx, i] = sent[i]
 
                 if include_negative:
-                    for i in range(self.max_sent_len):
+                    trials = 100
+                    add_neg = True
+                    for i in range(len(sent)):
                         if i >= self.max_sent_len:
                             break
-                        word = random.randint(1, len(self.idx2word))
-                        while word in sent:
-                            word = random.randint(1, len(self.idx2word))
-                        words_input_neg[batch_idx, i] = word
-
+                        word_sample = random.randint(1, len(self.idx2word))
+                        while self.cor_matrix[word_sample, sent[i]]:
+                            if trials <= 0:
+                                add_neg = False
+                                break
+                            trials -= 1
+                            word_sample = random.randint(1, len(self.idx2word))
+                        if add_neg:
+                            words_input_neg[batch_idx, i] = word_sample
+                        else:
+                            words_input_neg[batch_idx, i] = 0
+                            
                 batch_idx += 1
 
                 if batch_idx == self.batch_size:
