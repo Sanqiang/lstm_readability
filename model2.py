@@ -35,7 +35,7 @@ for line in open(glove_path, encoding="utf-8"):
     item = line.split()
     glove_vector[item[0].lower()] = [float(val) for val in item[1:]]
 
-for idx in range(word_embed_data):
+for idx in range(word_embed_data.shape[0]):
     word = data.idx2word[idx]
     if word in glove_vector:
         word_embed_data[idx, :] = glove_vector[word]
