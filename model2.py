@@ -8,9 +8,16 @@ from keras.optimizers import *
 from data import DataProvider
 from keras.callbacks import ModelCheckpoint
 import os
+import tensorflow as tf
 
 tag = "test"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
+K.set_session(session)
+
 
 data = DataProvider(batch_size=500)
 
@@ -18,6 +25,21 @@ embed_dim = 200
 vocab_size = 1 + len(data.idx2word)
 sen_len = data.max_sent_len
 word_embed_data = np.random.rand(vocab_size, embed_dim)
+
+#pretraining
+home = os.environ["HOME"]
+glove_vector = {}
+glove_path = "".join([home, "/data/glove/glove.twitter.27B.200d.txt"])
+
+for line in open(glove_path):
+    item = line.split()
+    glove_vector[item[0].lower()] = [float(val) for val in item[1:]]
+
+for idx in range(len(vocab_size)):
+    word = data.idx2word[idx]
+    if word in glove_vector:
+        word_embed_data[idx, :] = glove_vector[word]
+
 
 print("vocab size: ", vocab_size)
 print("padding sent len: ", data.max_sent_len)
