@@ -53,7 +53,7 @@ class DataProvider:
             words = line.split()
             self.data.append([int(word) for word in words])
 
-    def get_data(self, include_negative):
+    def get_data(self, include_negative, random_pick = False):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
         words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
         pseudo_output = np.zeros((self.batch_size, self.max_sent_len, 2))
@@ -61,6 +61,10 @@ class DataProvider:
         while True:
             random.shuffle(self.data)
             for sent in self.data:
+                if random_pick:
+                    ran_idx = random.randint(0, len(self.data))
+                    sent = self.data[ran_idx]
+
                 for i in range(len(sent)):
                     if i >= self.max_sent_len:
                         break
