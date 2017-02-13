@@ -31,7 +31,7 @@ home = os.environ["HOME"]
 glove_vector = {}
 glove_path = "".join([home, "/data/glove/glove.twitter.27B.200d.txt"])
 
-for line in open(glove_path):
+for line in open(glove_path, encoding="utf-8"):
     item = line.split()
     glove_vector[item[0].lower()] = [float(val) for val in item[1:]]
 
