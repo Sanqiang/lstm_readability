@@ -41,7 +41,7 @@ def hinge_loss(y_true, y_pred):
     loss = sen_len
     for i in range(sen_len):
         loss -= y_pred[:, i, i]
-    loss = K.mean(K.maximum(loss, 0.0))
+    loss = K.mean(loss)
     return loss
 
 
