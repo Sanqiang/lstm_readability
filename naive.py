@@ -70,29 +70,67 @@ for category in obj:
             data_sy.append(int(label))
 
 
-f_data_x2 = open("data_x2", data_x2)
+f_data_x2 = open("data_x2", "w")
 pickle.dump(data_x2, f_data_x2)
 
-f_data_sx2 = open("data_sx2", data_sx2)
+f_data_sx2 = open("data_sx2", "w")
 pickle.dump(data_sx2, f_data_sx2)
 
-f_data_x = open("data_x", data_x)
+f_data_x = open("data_x", "w")
 pickle.dump(data_x, f_data_x)
 
-f_data_sx = open("data_sx", data_sx)
+f_data_sx = open("data_sx", "w")
 pickle.dump(data_sx, f_data_sx)
 
-f_data_y = open("data_y", data_y)
+f_data_y = open("data_y", "w")
 pickle.dump(data_y, f_data_y)
 
-f_data_sy = open("data_sy", data_sy)
+f_data_sy = open("data_sy", "w")
 pickle.dump(data_sy, f_data_sy)
+
+result = open("result.txt", "a")
 
 reg = linear_model.Ridge(alpha = 1.0)
 scores = cross_val_score(reg, data_sx, data_sy, cv=10, n_jobs=-1, verbose=0)
-print(reduce(lambda x, y: x + y, scores) / len(scores))
+score = reduce(lambda x, y: x + y, scores) / len(scores)
+result.write("ave sen \t")
+result.write(str(score))
+result.write("\n")
 
 scores = cross_val_score(reg, data_sx2, data_sy, cv=10, n_jobs=-1, verbose=0)
-print(reduce(lambda x, y: x + y, scores) / len(scores))
+score = reduce(lambda x, y: x + y, scores) / len(scores)
+result.write("ave seg \t")
+result.write(str(score))
+result.write("\n")
+
+result.write("==================================================")
+
+for origin_category in data_x:
+    for target_category in data_x:
+        result.write("from\t")
+        result.write(origin_category)
+        result.write("\tto\t")
+        result.write(target_category)
+        result.write("\n")
+
+        reg = linear_model.Ridge(alpha=1.0)
+        reg.fit(data_x[origin_category], data_y[origin_category])
+        score = reg.score(data_x[target_category], data_y[target_category])
+        result.write("ave sen \t")
+        result.write(str(score))
+        result.write("\n")
+
+        reg.fit(data_x2[origin_category], data_y[origin_category])
+        score = reg.score(data_x2[target_category], data_y[target_category])
+        result.write("ave seg \t")
+        result.write(str(score))
+        result.write("\n")
+
+        result.write("==================================================")
+
+
+
+
+
 
 
