@@ -102,7 +102,7 @@ class DataProvider:
                             words_input_neg[batch_idx, i] = word_sample
                         else:
                             words_input_neg[batch_idx, i] = 0
-                            
+
                 batch_idx += 1
 
                 if batch_idx == self.batch_size:

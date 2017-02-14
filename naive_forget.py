@@ -68,7 +68,6 @@ for category in obj:
         for label in data_entry:
 
             forget_line = ""
-
             text = data_entry[label]
 
             text = [word_tokenize(sent) for sent in sent_tokenize(text)]
@@ -91,6 +90,7 @@ for category in obj:
                         gate = compareVector(glove_vector[word], glove_vector[word_pre])
                         forget_line = " ".join([forget_line, str(gate)])
 
+                    forget_line = "".join([forget_line, "\v"])
                     if word not in glove_vector or word_pre not in glove_vector or compareVector(glove_vector[word], glove_vector[word_pre]) < .5:
                         seg_per_sent += 1
             seg_per_sent /= len(text)
