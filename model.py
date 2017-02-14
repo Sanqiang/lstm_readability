@@ -20,7 +20,7 @@ K.set_session(session)
 data = DataProvider(batch_size=500)
 
 embed_dim = 200
-vocab_size = 1 + len(data.idx2word)
+vocab_size = len(data.idx2word)
 sen_len = data.max_sent_len
 word_embed_data = np.random.rand(vocab_size, embed_dim)
 #pretraining
@@ -79,7 +79,7 @@ print(model.summary())
 log_path = "".join([data.path,tag, "log"])
 
 model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
-                    nb_epoch=10000, samples_per_epoch=30301028, validation_data=data.get_data(include_negative=True, random_pick=True),
+                    nb_epoch=10000, samples_per_epoch=30301028, validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
                     ])
