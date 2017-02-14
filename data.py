@@ -52,7 +52,7 @@ class DataProvider:
 
     def populate_data(self):
         if self.cor_matrix_flag:
-            self.cor_matrix = np.full(len(self.idx2word), len(self.idx2word), fill_value=False, dtype=np.bool)
+            self.cor_matrix = np.full(shape=(len(self.idx2word), len(self.idx2word)), fill_value=False, dtype=np.bool)
 
         f = open(self.path_doc, "r")
         for line in f:

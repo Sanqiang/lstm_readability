@@ -179,6 +179,8 @@ for threshold in thresholds:
 
             result.write("==================================================\n")
 
+            result.close()
+
 
 
 
