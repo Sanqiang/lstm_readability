@@ -56,12 +56,11 @@ class DataProvider:
 
         f = open(self.path_doc, "r")
         for line in f:
-            words = line.split()
-            self.data.append([int(word) for word in words])
+            word_idxs = line.split()
+            self.data.append([int(word_idx) for word_idx in word_idxs])
             if self.cor_matrix_flag:
                 dq = deque(maxlen=10)
-                for word in words:
-                    word_idx = self.word2idx[word]
+                for word_idx in word_idxs:
                     dq.append(word_idx)
                     for loop_word_idx in dq:
                         self.cor_matrix[word_idx, loop_word_idx] = True
