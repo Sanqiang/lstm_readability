@@ -2,6 +2,7 @@ import os
 import json
 from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from functools import reduce
 import pickle
@@ -26,8 +27,8 @@ for threshold in thresholds:
     for entry in data:
         sims = [[float(sim) for sim in sent.split()] for sent in entry[0].split("\v")]
         label = int(entry[1])
-        if label > 5000:
-            continue
+        # if label > 5000:
+        #     continue
         category = entry[2]
 
         if category not in datas_category:
@@ -45,10 +46,18 @@ for threshold in thresholds:
         datas.append((num_seg, num_seg))
         datas_category[category].append((num_seg, num_seg))
 
-        labels.append(label)
-        labels_category[category].append(label)
+        if label >= 700:
+            labels.append(1)
+            labels_category[category].append(1)
+        else:
+            labels.append(0)
+            labels_category[category].append(0)
 
-    reg = linear_model.Ridge(alpha=0.0)
+        # labels.append(label)
+        # labels_category[category].append(label)
+
+    # reg = linear_model.Ridge(alpha=0.0)
+    reg = LogisticRegression()
     scores = cross_val_score(reg, datas, labels, cv=10, n_jobs=-1, verbose=0)
 
     score = reduce(lambda x, y: x + y, scores) / len(scores)
