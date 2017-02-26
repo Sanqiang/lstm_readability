@@ -45,7 +45,7 @@ class DataProvider:
         for line in f:
             words = line.split()
             for word in words:
-                word = line.strip()
+                word = word.strip()
                 if word not in self.word2idx:
                     self.word2idx[word] = len(self.word2idx)
                     self.idx2word.append(word)

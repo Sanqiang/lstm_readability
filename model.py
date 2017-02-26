@@ -12,6 +12,9 @@ import tensorflow as tf
 tag = "test_addneg"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
+
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="3"
 config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
@@ -50,7 +53,7 @@ def merge_sim(x):
     return K.concatenate(x, axis=2)
 
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
-                       weights=[word_embed_data])
+                       weights=[word_embed_data], mask_zero=True)
 lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="gpu", input_length=data.max_sent_len)
 sim_layer = Lambda(function=get_sim, name="sim_layer")
 merge_layer = Lambda(function=merge_sim, name="output_layer", output_shape=(sen_len, sen_len*2))
@@ -79,7 +82,8 @@ print(model.summary())
 log_path = "".join([data.path,tag, "log"])
 
 model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
-                    nb_epoch=10000, samples_per_epoch=30301028, validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
+                    nb_epoch=10000, samples_per_epoch=30301028,
+                    # validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
                     ])
