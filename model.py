@@ -8,6 +8,8 @@ from data import DataProvider
 from keras.callbacks import ModelCheckpoint
 import os
 import tensorflow as tf
+from keras.callbacks import Callback
+
 
 tag = "test_addneg"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
@@ -79,11 +81,20 @@ model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
 model.compile(optimizer=Adam(lr=0.0001), loss=hinge_loss)
 print(model.summary())
 
-log_path = "".join([data.path,tag, "log"])
+log_path = "/".join([home, tag])
+
+class my_checker_point(Callback):
+    def __init__(self, model):
+        self.model = model
+
+    def on_epoch_end(self, epoch, logs={}):
+        model_path = "/".join([log_path, "model.txt"])
+        np.save(model_path, self.model.get_weights())
 
 model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
                     nb_epoch=10000, samples_per_epoch=30301028,
                     # validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
                     callbacks=[
-                        ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
+                        ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False),
+                        my_checker_point(word_layer)
                     ])
