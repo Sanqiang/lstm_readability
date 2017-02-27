@@ -12,10 +12,25 @@ import math
 home = os.environ["HOME"]
 thresholds = [threshold/10.0 for threshold in range(10)]
 
+
 data = []
 for line in open("forget_label.txt"):
     if len(line.strip()) > 0:
         data.append((line.split("\t")))
+
+num_label = 5
+all_labels = []
+for entry in data:
+    label = int(entry[1])
+    all_labels.append(label)
+sorted(all_labels)
+
+thres_label = []
+step = 1.0 / num_label
+while step < 1:
+    thres_label.append(all_labels[step])
+    step *= 2
+thres_label.remove(thres_label[-1])
 
 for threshold in thresholds:
     datas_category = {}
@@ -46,15 +61,12 @@ for threshold in thresholds:
         datas.append((num_seg, num_seg))
         datas_category[category].append((num_seg, num_seg))
 
-        if label >= 700:
-            labels.append(1)
-            labels_category[category].append(1)
-        else:
-            labels.append(0)
-            labels_category[category].append(0)
+        i = 0
+        while i < len(thres_label) and label > thres_label[i]:
+            i += 1
 
-        # labels.append(label)
-        # labels_category[category].append(label)
+        labels.append(i)
+        labels_category[category].append(i)
 
     # reg = linear_model.Ridge(alpha=0.0)
     reg = LogisticRegression()
