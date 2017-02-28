@@ -70,7 +70,7 @@ class DataProvider:
             denom = 0
             for word_idx in self.word2cnt:
                 denom += self.word2cnt[word_idx] ** 0.75
-            for word_idx in self.idx2word:
+            for word_idx in self.word2cnt:
                 self.word2cnt[word_idx] = (self.word2cnt[word_idx] ** 0.75) / denom
 
             self.table = [0] * self.table_size
