@@ -9,10 +9,12 @@ from data import DataProvider
 from keras.callbacks import ModelCheckpoint
 import os
 import tensorflow as tf
+from keras.callbacks import Callback
 
-tag = "test"
+tag = "lstm_postive"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
-
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
 config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
@@ -71,11 +73,20 @@ model = Model(input=[words_input_pos], output=[pos_sim])
 model.compile(optimizer=Adam(lr=0.0001), loss=hinge_loss)
 print(model.summary())
 
-log_path = "".join([data.path,tag, "log"])
+log_path = "/".join([home, tag])
+
+class my_checker_point(Callback):
+    def __init__(self, model):
+        self.model = model
+
+    def on_epoch_end(self, epoch, logs={}):
+        model_path = "/".join([log_path, "model.txt"])
+        np.save(model_path, self.model.get_weights())
 
 model.fit_generator(generator=data.get_data(include_negative=False), nb_worker=1, pickle_safe=True,
                     nb_epoch=100000, samples_per_epoch=30301028,
                     validation_data=data.get_data(include_negative=False, random_pick=True), nb_val_samples=100,
                     callbacks=[
-                        ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False)
+                        ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False),
+                        my_checker_point(word_layer)
                     ])
