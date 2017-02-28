@@ -73,15 +73,16 @@ class DataProvider:
                 self.word2cnt[word_idx] = (self.word2cnt[word_idx] ** 0.75) / denom
 
             self.table = [0] * self.table_size
-            i = 0
-            d1 = (self.word2cnt[i] ** 0.75) / denom
+            i = 1
+            d1 = self.word2cnt[i]
             for a in range(self.table_size):
                 self.table[a] = i
                 if a/self.table_size > d1:
                     i += 1
+                    if i >= len(self.idx2word):
+                        i = len(self.idx2word) - 1
                     d1 += (self.word2cnt[i] ** 0.75) / denom
-                if i >= len(self.idx2word):
-                    i = len(self.idx2word) - 1
+
 
     def get_data(self, include_negative, random_pick = False):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
