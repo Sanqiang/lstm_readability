@@ -6,12 +6,13 @@ import numpy as np
 import random
 from collections import Counter
 from collections import deque
+from scipy.sparse import dok_matrix
 
 home = os.environ["HOME"]
 
 class DataProvider:
-    def __init__(self, batch_size, cor_matrix_flag = False):
-        self.cor_matrix_flag = cor_matrix_flag
+    def __init__(self, batch_size, negative_sampling = False):
+        self.negative_sampling = negative_sampling
 
         self.batch_size = batch_size
         #self.path = "".join([home,
@@ -36,6 +37,7 @@ class DataProvider:
         self.path = self.path_news
         self.path_word = self.path_news_dict
         self.path_doc = self.path_news_doc
+        self.table_size = 1e8
 
         self.populate_dict()
         self.populate_data()
@@ -51,21 +53,35 @@ class DataProvider:
                     self.idx2word.append(word)
 
     def populate_data(self):
-        if self.cor_matrix_flag:
-            self.cor_matrix = np.full(shape=(len(self.idx2word), len(self.idx2word)), fill_value=False, dtype=np.bool)
+        if self.negative_sampling:
+            self.word2cnt = {}
 
         f = open(self.path_doc, "r")
         for line in f:
             word_idxs = line.split()
             self.data.append([int(word_idx) for word_idx in word_idxs])
-            if self.cor_matrix_flag:
-                dq = deque(maxlen=10)
+            if self.negative_sampling:
                 for word_idx in word_idxs:
-                    dq.append(word_idx)
-                    for loop_word_idx in dq:
-                        self.cor_matrix[word_idx, loop_word_idx] = True
-                        self.cor_matrix[loop_word_idx, word_idx] = True
+                    if word_idx not in self.word2cnt:
+                        self.word2cnt[word_idx] = 0
+                    self.word2cnt[word_idx] += 1
+        if self.negative_sampling:
+            denom = 0
+            for word_idx in self.idx2word:
+                denom += self.word2cnt[word_idx] ** 0.75
+            for word_idx in self.idx2word:
+                self.word2cnt[word_idx] = (self.word2cnt[word_idx] ** 0.75) / denom
 
+            self.table = [0] * self.table_size
+            i = 0
+            d1 = (self.word2cnt[i] ** 0.75) / denom
+            for a in range(self.table_size):
+                self.table[a] = i
+                if a/self.table_size > d1:
+                    i += 1
+                    d1 += (self.word2cnt[i] ** 0.75) / denom
+                if i >= len(self.idx2word):
+                    i = len(self.idx2word) - 1
 
     def get_data(self, include_negative, random_pick = False):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
@@ -90,13 +106,13 @@ class DataProvider:
                     for i in range(len(sent)):
                         if i >= self.max_sent_len:
                             break
-                        word_sample = random.randint(1, len(self.idx2word))
-                        while self.cor_matrix[word_sample, sent[i]]:
+                        word_sample = self.table[random.randint(1, self.table_size)]
+                        while word_sample in sent:
                             if trials <= 0:
                                 add_neg = False
                                 break
                             trials -= 1
-                            word_sample = random.randint(1, len(self.idx2word))
+                            word_sample = self.table[random.randint(1, self.table_size)]
                         if add_neg:
                             words_input_neg[batch_idx, i] = word_sample
                         else:
@@ -253,7 +269,9 @@ class DataProvider:
         f.close()
 
 
+
 if __name__ == '__main__':
-    ddd = DataProvider(0)
+    ddd = DataProvider(0, negative_sampling=True)
     # ddd.temp_yelp()
-    ddd.temp_news()
+    # ddd.temp_news()
+    np.save("cor_matrix", ddd.cor_matrix)

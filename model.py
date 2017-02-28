@@ -16,13 +16,13 @@ os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="3"
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
 config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 K.set_session(session)
 
-data = DataProvider(batch_size=1, cor_matrix_flag = True)
+data = DataProvider(batch_size=1, negative_sampling= True)
 
 embed_dim = 200
 vocab_size = len(data.idx2word)
