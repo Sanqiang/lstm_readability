@@ -37,7 +37,7 @@ class DataProvider:
         self.path = self.path_news
         self.path_word = self.path_news_dict
         self.path_doc = self.path_news_doc
-        self.table_size = 1e8
+        self.table_size = int(1e8)
 
         self.populate_dict()
         self.populate_data()
