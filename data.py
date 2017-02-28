@@ -62,12 +62,13 @@ class DataProvider:
             self.data.append([int(word_idx) for word_idx in word_idxs])
             if self.negative_sampling:
                 for word_idx in word_idxs:
+                    word_idx = int(word_idx)
                     if word_idx not in self.word2cnt:
                         self.word2cnt[word_idx] = 0
                     self.word2cnt[word_idx] += 1
         if self.negative_sampling:
             denom = 0
-            for word_idx in self.idx2word:
+            for word_idx in self.word2cnt:
                 denom += self.word2cnt[word_idx] ** 0.75
             for word_idx in self.idx2word:
                 self.word2cnt[word_idx] = (self.word2cnt[word_idx] ** 0.75) / denom
