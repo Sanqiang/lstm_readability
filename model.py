@@ -81,7 +81,7 @@ model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
 model.compile(optimizer=Adam(lr=0.0001), loss=hinge_loss)
 print(model.summary())
 
-log_path = "/".join([home, tag])
+log_path = "/".join([home, "data","model" ,tag])
 
 class my_checker_point(Callback):
     def __init__(self, model):
