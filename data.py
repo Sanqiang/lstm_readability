@@ -106,13 +106,13 @@ class DataProvider:
                     trials = 100
                     add_neg = True
                     for i in range(min(len(sent), self.max_sent_len)):
-                        word_sample = self.table[random.randint(1, self.table_size)]
+                        word_sample = self.table[random.randint(1, self.table_size - 1)]
                         while word_sample in sent:
                             if trials <= 0:
                                 add_neg = False
                                 break
                             trials -= 1
-                            word_sample = self.table[random.randint(1, self.table_size)]
+                            word_sample = self.table[random.randint(1, self.table_size - 1)]
                         if add_neg:
                             words_input_neg[batch_idx, i] = word_sample
                         else:
