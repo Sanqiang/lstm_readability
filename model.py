@@ -22,7 +22,7 @@ config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 K.set_session(session)
 
-data = DataProvider(batch_size=1000, negative_sampling= True)
+data = DataProvider(batch_size=500, negative_sampling= True)
 
 embed_dim = 200
 vocab_size = len(data.idx2word)

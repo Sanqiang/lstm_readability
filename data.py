@@ -30,7 +30,7 @@ class DataProvider:
         #
         self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
         self.path_news_doc = "".join([home,
-             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data_simple.txt"])
+             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data2.txt"])
         self.path_news_dict = "".join([home,
             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict2.txt"])
 
