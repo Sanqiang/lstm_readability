@@ -22,7 +22,7 @@ config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 K.set_session(session)
 
-data = DataProvider(batch_size=1, negative_sampling= True)
+data = DataProvider(batch_size=1000, negative_sampling= True)
 
 embed_dim = 200
 vocab_size = len(data.idx2word)
@@ -92,7 +92,7 @@ class my_checker_point(Callback):
         np.save(model_path, self.model.get_weights())
 
 model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
-                    nb_epoch=10000, samples_per_epoch=30301028,
+                    nb_epoch=100, samples_per_epoch=30301028,
                     # validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
                     callbacks=[
                         ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False),

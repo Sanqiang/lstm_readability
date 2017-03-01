@@ -30,7 +30,7 @@ class DataProvider:
         #
         self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
         self.path_news_doc = "".join([home,
-             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data2.txt"])
+             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data_simple.txt"])
         self.path_news_dict = "".join([home,
             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict2.txt"])
 
@@ -80,8 +80,8 @@ class DataProvider:
                 self.table[a] = i
                 if a/self.table_size > d1:
                     i += 1
-                    if i >= len(self.idx2word):
-                        i = len(self.idx2word) - 1
+                    if i >= len(self.word2cnt):
+                        i = len(self.word2cnt) - 1
                     d1 += (self.word2cnt[i] ** 0.75) / denom
 
 
@@ -105,9 +105,7 @@ class DataProvider:
                 if include_negative:
                     trials = 100
                     add_neg = True
-                    for i in range(len(sent)):
-                        if i >= self.max_sent_len:
-                            break
+                    for i in range(min(len(sent), self.max_sent_len)):
                         word_sample = self.table[random.randint(1, self.table_size)]
                         while word_sample in sent:
                             if trials <= 0:
