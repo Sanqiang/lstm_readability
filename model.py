@@ -55,7 +55,7 @@ def merge_sim(x):
     return K.concatenate(x, axis=2)
 
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
-                       weights=[word_embed_data], mask_zero=True)
+                       weights=[word_embed_data])
 lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="gpu", input_length=data.max_sent_len)
 sim_layer = Lambda(function=get_sim, name="sim_layer")
 merge_layer = Lambda(function=merge_sim, name="output_layer", output_shape=(sen_len, sen_len*2))
