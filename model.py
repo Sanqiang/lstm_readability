@@ -95,6 +95,6 @@ model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1,
                     nb_epoch=100, samples_per_epoch=30301028,
                     # validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
                     callbacks=[
-                        ModelCheckpoint(filepath=log_path, verbose=1, save_best_only=False),
+                        ModelCheckpoint(filepath="/".join([log_path, "checker.txt"]), verbose=1, save_best_only=False),
                         my_checker_point(word_layer)
                     ])
