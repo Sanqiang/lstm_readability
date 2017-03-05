@@ -11,18 +11,18 @@ import tensorflow as tf
 from keras.callbacks import Callback
 
 
-tag = "test_addneg"
+tag = "test_addneg_simple"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
 
 
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
+#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+#os.environ["CUDA_VISIBLE_DEVICES"]="2"
 config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 K.set_session(session)
 
-data = DataProvider(batch_size=500, negative_sampling= True)
+data = DataProvider(batch_size=3000, negative_sampling= True)
 
 embed_dim = 200
 vocab_size = len(data.idx2word)
@@ -30,17 +30,17 @@ sen_len = data.max_sent_len
 word_embed_data = np.random.rand(vocab_size, embed_dim)
 #pretraining
 home = os.environ["HOME"]
-glove_vector = {}
-glove_path = "".join([home, "/data/glove/glove.twitter.27B.200d.txt"])
+#glove_vector = {}
+#glove_path = "".join([home, "/data/glove/glove.twitter.27B.200d.txt"])
 
-for line in open(glove_path, encoding="utf-8"):
-    item = line.split()
-    glove_vector[item[0].lower()] = [float(val) for val in item[1:]]
+#for line in open(glove_path, encoding="utf-8"):
+#    item = line.split()
+#    glove_vector[item[0].lower()] = [float(val) for val in item[1:]]
 
-for idx in range(word_embed_data.shape[0]):
-    word = data.idx2word[idx]
-    if word in glove_vector:
-        word_embed_data[idx, :] = glove_vector[word]
+#for idx in range(word_embed_data.shape[0]):
+#    word = data.idx2word[idx]
+#    if word in glove_vector:
+#        word_embed_data[idx, :] = glove_vector[word]
 
 print("vocab size: ", vocab_size)
 print("padding sent len: ", data.max_sent_len)
@@ -91,7 +91,7 @@ class my_checker_point(Callback):
         model_path = "/".join([log_path, "model.txt"])
         np.save(model_path, self.model.get_weights())
 
-model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=1, pickle_safe=True,
+model.fit_generator(generator=data.get_data(include_negative=True), nb_worker=4, pickle_safe=True,
                     nb_epoch=100, samples_per_epoch=30301028,
                     # validation_data=data.get_data(include_negative=True, random_pick=True), nb_val_samples=100,
                     callbacks=[
