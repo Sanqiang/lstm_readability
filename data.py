@@ -89,7 +89,7 @@ class DataProvider:
     def get_data(self, include_negative, random_pick = False):
         words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
         words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
-        pseudo_output = np.zeros((self.batch_size, self.max_sent_len, 2))
+        pseudo_output = np.zeros((self.batch_size, self.max_sent_len * 2))
         batch_idx = 0
         while True:
             random.shuffle(self.data)
@@ -124,10 +124,10 @@ class DataProvider:
                 if batch_idx == self.batch_size:
                     if include_negative:
                         yield ({"words_input_pos": words_input_pos, "words_input_neg": words_input_neg},
-                               {"output_layer": pseudo_output})
+                               {"merge_layer": pseudo_output})
                     else:
                         yield ({"words_input_pos": words_input_pos},
-                               {"output_layer": pseudo_output})
+                               {"merge_layer": pseudo_output})
                     words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
                     words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
                     batch_idx = 0
