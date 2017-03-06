@@ -22,7 +22,7 @@ config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 K.set_session(session)
 
-data = DataProvider(batch_size=3000, negative_sampling= True)
+data = DataProvider(batch_size=1, negative_sampling= True)
 
 embed_dim = 200
 vocab_size = len(data.idx2word)
@@ -55,13 +55,14 @@ def merge_sim(x):
     return K.concatenate(x, axis=2)
 
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
-                       weights=[word_embed_data])
+                       weights=[word_embed_data], mask_zero=True)
 lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="gpu", input_length=data.max_sent_len)
-sim_layer = Lambda(function=get_sim, name="sim_layer")
+sim_layer = Merge(mode="dot", dot_axes=2, name="sim_layer")
 merge_layer = Lambda(function=merge_sim, name="output_layer", output_shape=(sen_len, sen_len*2))
 
 words_embed_pos = word_layer(words_input_pos)
 words_embed_neg = word_layer(words_input_neg)
+
 lstm_embed = lstm_layer(words_embed_pos)
 pos_sim = sim_layer([lstm_embed, words_embed_pos])
 neg_sim = sim_layer([lstm_embed, words_embed_neg])

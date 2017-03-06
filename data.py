@@ -68,7 +68,8 @@ class DataProvider:
                     self.word2cnt[word_idx] += 1
         if self.negative_sampling:
             denom = 0
-            for word_idx in self.word2cnt:
+            for idx in range(1, len(self.word2cnt)):
+                word_idx = self.word2cnt.keys()[idx]
                 denom += self.word2cnt[word_idx] ** 0.75
             for word_idx in self.word2cnt:
                 self.word2cnt[word_idx] = (self.word2cnt[word_idx] ** 0.75) / denom
@@ -82,7 +83,7 @@ class DataProvider:
                     i += 1
                     if i >= len(self.word2cnt):
                         i = len(self.word2cnt) - 1
-                    d1 += (self.word2cnt[i] ** 0.75) / denom
+                    d1 += self.word2cnt[i]
 
 
     def get_data(self, include_negative, random_pick = False):
