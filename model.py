@@ -9,7 +9,7 @@ from keras.callbacks import ModelCheckpoint
 import os
 import tensorflow as tf
 from keras.callbacks import Callback
-
+np.random.seed(1)
 
 tag = "test_addneg_simple"
 os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
@@ -48,17 +48,17 @@ print("padding sent len: ", data.max_sent_len)
 words_input_pos = Input(shape=(sen_len,), dtype="int32", name="words_input_pos")
 words_input_neg = Input(shape=(sen_len,), dtype="int32", name="words_input_neg")
 
-def get_sim(x):
-    return K.batch_dot(x[0], x[1], axes=2)
 
-def merge_sim(x):
-    return K.concatenate(x, axis=2)
+def get_diag(x):
+    return tf.matrix_diag_part(x)
 
 word_layer = Embedding(input_dim=vocab_size, output_dim=embed_dim, trainable=True, name="word_layer",
                        weights=[word_embed_data], mask_zero=True)
 lstm_layer = LSTM(embed_dim, return_sequences=True, name="lstm_layer", consume_less="gpu", input_length=data.max_sent_len)
 sim_layer = Merge(mode="dot", dot_axes=2, name="sim_layer")
-merge_layer = Lambda(function=merge_sim, name="output_layer", output_shape=(sen_len, sen_len*2))
+diag_layer = Lambda(function=get_diag, name="diag_layer")
+merge_layer = Merge(mode="concat", dot_axes=-1, name="merge_layer")
+
 
 words_embed_pos = word_layer(words_input_pos)
 words_embed_neg = word_layer(words_input_neg)
@@ -66,19 +66,18 @@ words_embed_neg = word_layer(words_input_neg)
 lstm_embed = lstm_layer(words_embed_pos)
 pos_sim = sim_layer([lstm_embed, words_embed_pos])
 neg_sim = sim_layer([lstm_embed, words_embed_neg])
+
+pos_sim = diag_layer(pos_sim)
+neg_sim = diag_layer(neg_sim)
+
 merge_embed = merge_layer([pos_sim, neg_sim])
 
 
 def hinge_loss(y_true, y_pred):
-    loss = sen_len
-    for i in range(sen_len):
-        loss -= y_pred[:, i, i]
-        loss += y_pred[:, i, i+sen_len]
-    loss = K.mean(K.maximum(loss, 0.0))
-    return loss
+    return K.mean(K.square(K.maximum(y_pred[:, sen_len:] - y_pred[:, :sen_len] + 1.0, 0.0)), axis=-1)
 
 
-model = Model(input=[words_input_pos, words_input_neg], output=[merge_embed])
+model = Model(input=[words_input_pos, words_input_neg], output=[merge_layer])
 model.compile(optimizer=Adam(lr=0.0001), loss=hinge_loss)
 print(model.summary())
 
