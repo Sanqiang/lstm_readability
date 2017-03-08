@@ -16,7 +16,7 @@ class Config:
         os.environ["CUDA_VISIBLE_DEVICES"] = "2"
         config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-        self.sess = tf.Session(config=config)
+        self.sess = tf.InteractiveSession(config=config)
 
         self.word_dim = 300
         self.num_layers = 1
