@@ -62,9 +62,8 @@ merge_layer = Merge(mode="concat", dot_axes=-1, name="merge_layer")
 words_embed_pos = word_layer(words_input_pos)
 words_embed_neg = word_layer(words_input_neg)
 
-lstm_embed = lstm_layer(words_embed_pos)
-pos_sim = merge([lstm_embed, words_embed_pos], mode="dot", dot_axes=2)
-neg_sim = merge([lstm_embed, words_embed_neg], mode="dot", dot_axes=2)
+lstm_embed_pos = lstm_layer(words_embed_pos)
+lstm_embed_neg = lstm_layer(words_embed_pos)
 
 pos_sim = diag_layer(pos_sim)
 neg_sim = diag_layer(neg_sim)

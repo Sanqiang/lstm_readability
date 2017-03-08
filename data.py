@@ -39,8 +39,8 @@ class DataProvider:
         self.path_doc = self.path_news_doc
         self.table_size = int(1e8)
 
-        self.populate_dict()
-        self.populate_data()
+        # self.populate_dict()
+        # self.populate_data()
 
     def populate_dict(self):
         f = open(self.path_word, "r")
@@ -134,11 +134,11 @@ class DataProvider:
 
     def word_transform(self, word):
         word = word.lower()
-        # word = self.stemmer.stem(word)
-        #
-        # for i in range(len(word)):
-        #     if word[i] < 'a' or word[i] > 'z':
-        #         return "<UNK>"
+        word = self.stemmer.stem(word)
+
+        for i in range(len(word)):
+            if word[i] < 'a' or word[i] > 'z':
+                return "<UNK>"
         return word
 
     # deprecated
@@ -215,57 +215,69 @@ class DataProvider:
         f_word.close()
 
     def temp_news(self):
+        from nltk.tokenize import word_tokenize, sent_tokenize
+
         word2cnt = Counter()
+        word2idx = {}
 
         files = os.listdir(self.path_news)
         for file in files:
             if file[0:4] != "news":
                 continue
             file = "/".join([self.path_news, file])
-            for line in open(file, "r"):
-                words = line.split()
-                for word in words:
-                    word = self.word_transform(word)
-                    if word not in word2cnt:
-                        word2cnt[word] = 0
-                    word2cnt[word] += 1
+            for text in open(file, "r"):
+                lines = sent_tokenize(text)
+                for line in lines:
+                    words = word_tokenize(line)
+                    for word in words:
+                        word = self.word_transform(word)
+                        if word not in word2cnt:
+                            word2cnt[word] = 0
+                        word2cnt[word] += 1
             print("finished", file)
+            # break
+
+        word2cnt = word2cnt.most_common()
+        for word,cnt in word2cnt:
+            word2idx[word] = len(word2idx)
+
         print("finish word count", str(len(word2cnt)))
-        nword2cnt = {}
-        for word in word2cnt:
-            if word2cnt[word] > 5:
-                nword2cnt[word] = word2cnt[word]
-        word2cnt = nword2cnt
-        print("current word count", str(len(word2cnt)))
+        # nword2cnt = {}
+        # for word in word2cnt:
+        #     if word2cnt[word] > 5:
+        #         nword2cnt[word] = word2cnt[word]
+        # word2cnt = nword2cnt
+        # print("current word count", str(len(word2cnt)))
         f = open(self.path_news_doc, "w")
         data = ""
         for file in files:
             if file[0:4] != "news":
                 continue
             file = "/".join([self.path_news, file])
-            for line in open(file, "r"):
-                cur_line = ""
-                words = line.split()
-                for word in words:
-                    word = self.word_transform(word)
-                    if word in word2cnt:
-                        if word not in self.word2idx:
-                            self.word2idx[word] = len(self.word2idx)
-                            self.idx2word.append(word)
-                    else:
-                        word = "<UNK>"
-                    cur_line = " ".join((cur_line, str(self.word2idx[word])))
-                data = "\n".join((data, cur_line))
+            for text in open(file, "r"):
+                lines = sent_tokenize(text)
+                for line in lines:
+                    cur_line = ""
+                    words = word_tokenize(line)
+                    for word in words:
+                        word = self.word_transform(word)
+                        if word not in word2idx:
+                            word = "<UNK>"
+                        cur_line = " ".join((cur_line, str(word2idx[word])))
+                    data = "\n".join((data, cur_line))
                 if len(data) > 100000:
                     f.write(data)
                     data = ""
             print("finished", file)
+            # break
         f.write(data)
         f.close()
 
         f = open(self.path_news_dict, "w")
-        for word in self.idx2word:
+        for word, cnt in word2cnt:
             f.write(word)
+            f.write("\t")
+            f.write(str(cnt))
             f.write("\n")
         f.close()
 
@@ -274,5 +286,5 @@ class DataProvider:
 if __name__ == '__main__':
     ddd = DataProvider(0, negative_sampling=True)
     # ddd.temp_yelp()
-    # ddd.temp_news()
-    np.save("cor_matrix", ddd.cor_matrix)
+    ddd.temp_news()
+    # np.save("cor_matrix", ddd.cor_matrix)
