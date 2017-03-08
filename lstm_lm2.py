@@ -6,7 +6,7 @@ home = os.environ["HOME"]
 
 class Config:
     def __init__(self):
-        self.batch_size = 20
+        self.batch_size = 500
         self.sen_len = 50
         self.num_epochs = 100
 
@@ -64,6 +64,7 @@ class ReadingData:
                     batch_x = [[0] * self.conf.sen_len] * self.conf.batch_size
                     batch_y = [[0] * self.conf.sen_len] * self.conf.batch_size
                     batch_idx = 0
+            yield None, None
 
 
 class ReadingModel:
@@ -114,12 +115,20 @@ class ReadingModel:
 
         gen = self.data.batch_generator()
         tf.global_variables_initializer().run()
-        for i in range(self.conf.num_epochs):
+        # for i in range(self.conf.num_epochs):
+        i = 0
+        while True:
             batch_x, batch_y = next(gen)
-            self.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
+            if batch_x is None or batch_y is None:
+                print("\t".join(["Epoch", str(i), "Finished"]))
+                np.savetxt(self.conf.path_output, embedding_data)
+                i += 1
+                if i == self.conf.num_epochs:
+                    break
+
+            self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             embedding_data = embedding.eval()
-            np.savetxt(self.conf.path_output, embedding_data)
-            print("\t".join(["Epoch", str(i), "Finished"]))
+
 
 
 if __name__ == '__main__':
