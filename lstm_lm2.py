@@ -11,6 +11,12 @@ class Config:
         self.num_epochs = 100
 
         self.processor = "/gpu:2"
+        os.environ['THEANO_FLAGS'] = 'device=cpu,blas.ldflags=-lblas -lgfortran'
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+        os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+        config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
+        config.gpu_options.allow_growth = True
+        self.sess = tf.Session(config=config)
 
         self.word_dim = 300
         self.num_layers = 1
@@ -79,7 +85,7 @@ class ReadingModel:
             [lstm_cell() for _ in range(self.conf.num_layers)], state_is_tuple=True)
         self._initial_state = cell.zero_state(self.conf.batch_size, tf.float32)
 
-        with tf.device(self.processor):
+        with tf.device(self.conf.processor):
             embedding = tf.get_variable(
                 "embedding", [self.data.vocab_size, self.conf.word_dim], dtype=tf.float32)
             inputs = tf.nn.embedding_lookup(embedding, ph_x)
@@ -107,11 +113,10 @@ class ReadingModel:
         self.train_step = tf.train.GradientDescentOptimizer(self.conf.lr).minimize(self._cost)
 
         gen = self.data.batch_generator()
-        sess = tf.InteractiveSession()
         tf.global_variables_initializer().run()
         for i in range(self.conf.num_epochs):
             batch_x, batch_y = next(gen)
-            sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
+            self.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             embedding_data = embedding.eval()
             np.savetxt(self.conf.path_output, embedding_data)
             print("\t".join(["Epoch", str(i), "Finished"]))

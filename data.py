@@ -235,7 +235,7 @@ class DataProvider:
                             word2cnt[word] = 0
                         word2cnt[word] += 1
             print("finished", file)
-            # break
+            break
 
         word2cnt = word2cnt.most_common()
         for word,cnt in word2cnt:
@@ -269,7 +269,7 @@ class DataProvider:
                     f.write(data)
                     data = ""
             print("finished", file)
-            # break
+            break
         f.write(data)
         f.close()
 
@@ -285,6 +285,7 @@ class DataProvider:
 
 if __name__ == '__main__':
     ddd = DataProvider(0, negative_sampling=True)
+    print(ddd.path_news_doc)
     # ddd.temp_yelp()
     ddd.temp_news()
     # np.save("cor_matrix", ddd.cor_matrix)
