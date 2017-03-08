@@ -10,6 +10,8 @@ class Config:
         self.sen_len = 50
         self.num_epochs = 100
 
+        self.processor = "/gpu:2"
+
         self.word_dim = 300
         self.num_layers = 1
         self.lr = 0.001
@@ -63,6 +65,9 @@ class ReadingModel:
         self.conf = conf
         self.data = data
 
+        import logging
+        logging.getLogger().setLevel(logging.INFO)
+
     def train(self):
         ph_x = tf.placeholder(tf.int32, [None, self.conf.sen_len], name="input_x")
         ph_y = tf.placeholder(tf.int32, [None, self.conf.sen_len], name="input_y")
@@ -74,7 +79,7 @@ class ReadingModel:
             [lstm_cell() for _ in range(self.conf.num_layers)], state_is_tuple=True)
         self._initial_state = cell.zero_state(self.conf.batch_size, tf.float32)
 
-        with tf.device("/cpu:0"):
+        with tf.device(self.processor):
             embedding = tf.get_variable(
                 "embedding", [self.data.vocab_size, self.conf.word_dim], dtype=tf.float32)
             inputs = tf.nn.embedding_lookup(embedding, ph_x)
@@ -109,6 +114,8 @@ class ReadingModel:
             sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             embedding_data = embedding.eval()
             np.savetxt(self.conf.path_output, embedding_data)
+            print("\t".join(["Epoch", str(i), "Finished"]))
+
 
 if __name__ == '__main__':
     conf = Config()
