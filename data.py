@@ -30,9 +30,9 @@ class DataProvider:
         #
         self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
         self.path_news_doc = "".join([home,
-             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data2.txt"])
+             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data.txt"])
         self.path_news_dict = "".join([home,
-            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict2.txt"])
+            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict.txt"])
 
         self.path = self.path_news
         self.path_word = self.path_news_dict
@@ -235,7 +235,7 @@ class DataProvider:
                             word2cnt[word] = 0
                         word2cnt[word] += 1
             print("finished", file)
-            break
+            # break
 
         word2cnt = word2cnt.most_common()
         for word,cnt in word2cnt:
@@ -269,7 +269,7 @@ class DataProvider:
                     f.write(data)
                     data = ""
             print("finished", file)
-            break
+            # break
         f.write(data)
         f.close()
 

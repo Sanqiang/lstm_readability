@@ -23,7 +23,7 @@ import os.path
 
 import tensorflow as tf
 
-import reader
+from archive import reader
 
 
 class PtbReaderTest(tf.test.TestCase):
