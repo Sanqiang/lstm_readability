@@ -44,10 +44,10 @@ class ReadingData:
         self.vocab_size = len(self.idx2word)
 
     def batch_generator(self):
-        batch_x = [[0] * self.conf.sen_len] * self.conf.batch_size
-        batch_y = [[0] * self.conf.sen_len] * self.conf.batch_size
-        batch_idx = 0
         while True:
+            batch_x = [[0] * self.conf.sen_len] * self.conf.batch_size
+            batch_y = [[0] * self.conf.sen_len] * self.conf.batch_size
+            batch_idx = 0
             f_doc = open(self.conf.path_data, "r")
             for line in f_doc:
                 words = line.split()
@@ -56,7 +56,7 @@ class ReadingData:
                     if i < self.conf.sen_len:
                         batch_x[batch_idx][i] = word
                     if i + 1 < self.conf.sen_len:
-                        batch_x[batch_idx][i+1] = word
+                        batch_y[batch_idx][i+1] = word
                     i+=1
                 batch_idx += 1
                 if batch_idx == self.conf.batch_size:
@@ -120,6 +120,7 @@ class ReadingModel:
             batch_x, batch_y = next(gen)
             if batch_x is None or batch_y is None:
                 print("\t".join(["Epoch", str(i), "Finished"]))
+                embedding_data = embedding.eval()
                 np.savetxt(self.conf.path_output, embedding_data)
                 i += 1
                 if i == self.conf.num_epochs:
@@ -128,7 +129,7 @@ class ReadingModel:
                     continue
 
             self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
-            embedding_data = embedding.eval()
+
 
 
 
