@@ -53,7 +53,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from archive import reader
+import reader
 
 flags = tf.flags
 logging = tf.logging
@@ -61,7 +61,7 @@ logging = tf.logging
 flags.DEFINE_string(
     "model", "small",
     "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", "/Users/zhaosanqiang916/data/simple-examples/data/", #"/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/"
+flags.DEFINE_string("data_path", "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/", # "/Users/zhaosanqiang916/data/simple-examples/data/"
                     "Where the training/test data is stored.")
 flags.DEFINE_string("save_path", "output.txt",
                     "Model output directory.")
