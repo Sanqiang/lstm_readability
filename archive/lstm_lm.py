@@ -114,7 +114,7 @@ class PTBModel(object):
 
     self._initial_state = cell.zero_state(batch_size, data_type())
 
-    with tf.device("/gpu:2"):
+    with tf.device("/gpu:3"):
       self.embedding = tf.get_variable(
           "embedding", [vocab_size, size], dtype=data_type())
       inputs = tf.nn.embedding_lookup(self.embedding, input_.input_data)
@@ -208,7 +208,7 @@ class SmallConfig(object):
   keep_prob = 0.999
   lr_decay = 1
   batch_size = 500
-  vocab_size = 10000
+  vocab_size = 25000
 
 
 class MediumConfig(object):
@@ -367,6 +367,6 @@ def main(_):
 
 
 if __name__ == "__main__":
-  os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-  os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+  # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+  # os.environ["CUDA_VISIBLE_DEVICES"] = "2"
   tf.app.run()
