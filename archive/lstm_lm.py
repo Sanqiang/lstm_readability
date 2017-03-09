@@ -53,7 +53,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-import reader
+from archive import reader
 
 flags = tf.flags
 logging = tf.logging
@@ -61,7 +61,7 @@ logging = tf.logging
 flags.DEFINE_string(
     "model", "small",
     "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", "/Users/zhaosanqiang916/data/simple-examples/data/",
+flags.DEFINE_string("data_path", "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/",
                     "Where the training/test data is stored.")
 flags.DEFINE_string("save_path", "output.txt",
                     "Model output directory.")
@@ -113,10 +113,10 @@ class PTBModel(object):
 
     self._initial_state = cell.zero_state(batch_size, data_type())
 
-    with tf.device("/cpu:0"):
-      embedding = tf.get_variable(
+    with tf.device("/gpu:2"):
+      self.embedding = tf.get_variable(
           "embedding", [vocab_size, size], dtype=data_type())
-      inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
+      inputs = tf.nn.embedding_lookup(self.embedding, input_.input_data)
 
     if is_training and config.keep_prob < 1:
       inputs = tf.nn.dropout(inputs, config.keep_prob)
@@ -268,6 +268,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
   fetches = {
       "cost": model.cost,
       "final_state": model.final_state,
+      "embedding": model.embedding
   }
   if eval_op is not None:
     fetches["eval_op"] = eval_op
@@ -279,8 +280,11 @@ def run_epoch(session, model, eval_op=None, verbose=False):
       feed_dict[h] = state[i].h
 
     vals = session.run(fetches, feed_dict)
+
     cost = vals["cost"]
     state = vals["final_state"]
+    embedding = vals["embedding"]
+    np.savetxt("embedding", embedding.eval())
 
     costs += cost
     iters += model.input.num_steps
