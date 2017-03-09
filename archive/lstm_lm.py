@@ -54,6 +54,7 @@ import numpy as np
 import tensorflow as tf
 
 import reader
+import os
 
 flags = tf.flags
 logging = tf.logging
@@ -61,7 +62,7 @@ logging = tf.logging
 flags.DEFINE_string(
     "model", "small",
     "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/", # "/Users/zhaosanqiang916/data/simple-examples/data/"
+flags.DEFINE_string("data_path", "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/yelp/", # "/Users/zhaosanqiang916/data/simple-examples/data/" "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/"
                     "Where the training/test data is stored.")
 flags.DEFINE_string("save_path", "output.txt",
                     "Model output directory.")
@@ -196,17 +197,17 @@ class PTBModel(object):
 
 class SmallConfig(object):
   """Small config."""
-  init_scale = 0.1
-  learning_rate = 0.001
+  init_scale = 0.06
+  learning_rate = 1.0
   max_grad_norm = 5
-  num_layers = 2
+  num_layers = 1
   num_steps = 20
-  hidden_size = 200
-  max_epoch = 4
-  max_max_epoch = 13
-  keep_prob = 1.0
+  hidden_size = 300
+  max_epoch = 100
+  max_max_epoch = 1000
+  keep_prob = 0.999
   lr_decay = 1
-  batch_size = 100
+  batch_size = 500
   vocab_size = 10000
 
 
@@ -344,7 +345,6 @@ def main(_):
       with tf.variable_scope("Model", reuse=True, initializer=initializer):
         mtest = PTBModel(is_training=False, config=eval_config,
                          input_=test_input)
-
     sv = tf.train.Supervisor(logdir=FLAGS.save_path)
     with sv.managed_session() as session:
       for i in range(config.max_max_epoch):
@@ -367,4 +367,6 @@ def main(_):
 
 
 if __name__ == "__main__":
+  os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+  os.environ["CUDA_VISIBLE_DEVICES"] = "2"
   tf.app.run()
