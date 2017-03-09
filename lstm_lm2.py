@@ -115,7 +115,6 @@ class ReadingModel:
 
         gen = self.data.batch_generator()
         tf.global_variables_initializer().run()
-        # for i in range(self.conf.num_epochs):
         i = 0
         while True:
             batch_x, batch_y = next(gen)
@@ -125,6 +124,8 @@ class ReadingModel:
                 i += 1
                 if i == self.conf.num_epochs:
                     break
+                else:
+                    continue
 
             self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             embedding_data = embedding.eval()
