@@ -39,6 +39,12 @@ def _build_vocab(filename):
   words, _ = list(zip(*count_pairs))
   word_to_id = dict(zip(words, range(len(words))))
 
+  f = open("dict", "w")
+  for word in words:
+      f.write(word)
+      f.write("\n")
+  f.close()
+
   return word_to_id
 
 

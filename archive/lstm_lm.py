@@ -197,7 +197,7 @@ class PTBModel(object):
 class SmallConfig(object):
   """Small config."""
   init_scale = 0.1
-  learning_rate = 1.0
+  learning_rate = 0.001
   max_grad_norm = 5
   num_layers = 2
   num_steps = 20
@@ -205,8 +205,8 @@ class SmallConfig(object):
   max_epoch = 4
   max_max_epoch = 13
   keep_prob = 1.0
-  lr_decay = 0.5
-  batch_size = 20
+  lr_decay = 1
+  batch_size = 100
   vocab_size = 10000
 
 
@@ -283,14 +283,14 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
     cost = vals["cost"]
     state = vals["final_state"]
-    embedding_data = vals["embedding"]
-    np.savetxt("embedding", embedding_data)
 
     costs += cost
     iters += model.input.num_steps
 
     if verbose and step % (model.input.epoch_size // 10) == 10:
-      print("%.3f perplexity: %.3f speed: %.0f wps" %
+        embedding_data = vals["embedding"]
+        np.savetxt("embedding", embedding_data)
+        print("%.3f perplexity: %.3f speed: %.0f wps" %
             (step * 1.0 / model.input.epoch_size, np.exp(costs / iters),
              iters * model.input.batch_size / (time.time() - start_time)))
 
@@ -355,11 +355,11 @@ def main(_):
         train_perplexity = run_epoch(session, m, eval_op=m.train_op,
                                      verbose=True)
         print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
-        valid_perplexity = run_epoch(session, mvalid)
-        print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
+        # valid_perplexity = run_epoch(session, mvalid)
+        # print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
-      test_perplexity = run_epoch(session, mtest)
-      print("Test Perplexity: %.3f" % test_perplexity)
+      # test_perplexity = run_epoch(session, mtest)
+      # print("Test Perplexity: %.3f" % test_perplexity)
 
       if FLAGS.save_path:
         print("Saving model to %s." % FLAGS.save_path)
