@@ -61,7 +61,7 @@ logging = tf.logging
 flags.DEFINE_string(
     "model", "small",
     "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/",
+flags.DEFINE_string("data_path", "/Users/zhaosanqiang916/data/simple-examples/data/", #"/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/"
                     "Where the training/test data is stored.")
 flags.DEFINE_string("save_path", "output.txt",
                     "Model output directory.")
@@ -113,7 +113,7 @@ class PTBModel(object):
 
     self._initial_state = cell.zero_state(batch_size, data_type())
 
-    with tf.device("/gpu:2"):
+    with tf.device("/cpu:0"):
       self.embedding = tf.get_variable(
           "embedding", [vocab_size, size], dtype=data_type())
       inputs = tf.nn.embedding_lookup(self.embedding, input_.input_data)
@@ -283,8 +283,8 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
     cost = vals["cost"]
     state = vals["final_state"]
-    embedding = vals["embedding"]
-    np.savetxt("embedding", embedding.eval())
+    embedding_data = vals["embedding"]
+    np.savetxt("embedding", embedding_data)
 
     costs += cost
     iters += model.input.num_steps
