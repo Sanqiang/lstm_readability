@@ -73,15 +73,15 @@ def ptb_raw_data(data_path=None):
   """
 
   train_path = os.path.join(data_path, "review.json")
-  valid_path = os.path.join(data_path, "review.json")
-  test_path = os.path.join(data_path, "review.json")
+  # valid_path = os.path.join(data_path, "review.json")
+  # test_path = os.path.join(data_path, "review.json")
 
   word_to_id = _build_vocab(train_path)
   train_data = _file_to_word_ids(train_path, word_to_id)
-  valid_data = _file_to_word_ids(valid_path, word_to_id)
-  test_data = _file_to_word_ids(test_path, word_to_id)
+  # valid_data = _file_to_word_ids(valid_path, word_to_id)
+  # test_data = _file_to_word_ids(test_path, word_to_id)
   vocabulary = len(word_to_id)
-  return train_data, valid_data, test_data, vocabulary
+  return train_data, None, None, vocabulary
 
 
 def ptb_producer(raw_data, batch_size, num_steps, name=None):

@@ -334,17 +334,17 @@ def main(_):
       tf.summary.scalar("Training Loss", m.cost)
       tf.summary.scalar("Learning Rate", m.lr)
 
-    with tf.name_scope("Valid"):
-      valid_input = PTBInput(config=config, data=valid_data, name="ValidInput")
-      with tf.variable_scope("Model", reuse=True, initializer=initializer):
-        mvalid = PTBModel(is_training=False, config=config, input_=valid_input)
-      tf.summary.scalar("Validation Loss", mvalid.cost)
-
-    with tf.name_scope("Test"):
-      test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
-      with tf.variable_scope("Model", reuse=True, initializer=initializer):
-        mtest = PTBModel(is_training=False, config=eval_config,
-                         input_=test_input)
+    # with tf.name_scope("Valid"):
+    #   valid_input = PTBInput(config=config, data=valid_data, name="ValidInput")
+    #   with tf.variable_scope("Model", reuse=True, initializer=initializer):
+    #     mvalid = PTBModel(is_training=False, config=config, input_=valid_input)
+    #   tf.summary.scalar("Validation Loss", mvalid.cost)
+    #
+    # with tf.name_scope("Test"):
+    #   test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
+    #   with tf.variable_scope("Model", reuse=True, initializer=initializer):
+    #     mtest = PTBModel(is_training=False, config=eval_config,
+    #                      input_=test_input)
     sv = tf.train.Supervisor(logdir=FLAGS.save_path)
     with sv.managed_session() as session:
       for i in range(config.max_max_epoch):
