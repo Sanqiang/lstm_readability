@@ -32,6 +32,7 @@ def _read_words(filename):
 
 def _build_vocab(filename):
   data = _read_words(filename)
+  data = [word.lower() for word in data]
 
   counter = collections.Counter(data)
   count_pairs = counter.most_common(25000)
