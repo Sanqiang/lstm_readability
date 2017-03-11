@@ -212,7 +212,7 @@ class ReadingModel:
                 progress = float(idx_progress / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(vals["cost"]), "\n"]))
                 sys.stdout.flush()
-                np.savetxt(self.conf.path_output, vals["embedding"].eval())
+                np.savetxt(self.conf.path_output, vals["embedding"])
             idx_progress += 1
 
 
