@@ -30,22 +30,31 @@ class Config:
 
         self.sen_len = 50
         self.num_epochs = 100
-        self.num_sen = 324085
+        self.num_sen = 22397781
         self.max_grad_norm = 5
 
         self.word_dim = 300
         self.num_layers = 1
         self.lr = 1.0
 
-        self.path_data = "".join([home,
-             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data2.txt"])
-        self.path_word = "".join([home,
-            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict2.txt"])
-        self.path_output = "".join([home,
-            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/model.txt"])
+        # self.path_data = "".join([home,
+        #      "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data2.txt"])
+        # self.path_word = "".join([home,
+        #     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict2.txt"])
+        # self.path_output = "".join([home,
+        #     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/model.txt"])
+        #
+        # self.path_embedding_model = "".join([home,"/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/embedding.model"])
 
-        self.path_embedding_model = "embedding"
-            # "".join([home,"/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/embedding.model"])
+        self.path_data = "".join([home,
+             "/data/yelp/processed/data.txt"])
+        self.path_word = "".join([home,
+            "/data/yelp/processed/word.dict"])
+        self.path_output = "".join([home,
+            "/data/yelp/processed/model.txt"])
+
+        self.path_embedding_model = "".join([home,
+            "/data/yelp/processed/embedding.txt"])
 
 class ReadingData:
     def __init__(self, conf):
@@ -70,6 +79,7 @@ class ReadingData:
                 words = line.split()
                 i = 0
                 for word in words:
+                    word = int(word)
                     if i < self.conf.sen_len:
                         batch_x[batch_idx][i] = word
                     if i + 1 < self.conf.sen_len:
@@ -92,26 +102,26 @@ class ReadingModel:
         # logging.getLogger().setLevel(logging.INFO)
 
     def evaluate_embedding(self):
-        if not os.path.exists(self.conf.path_embedding_model):
-            f_model = open(self.conf.path_embedding_model, "w")
-            f_model.write(str(self.data.vocab_size))
-            f_model.write(" ")
-            f_model.write(str(self.conf.word_dim))
-            f_model.write("\n")
+        # if not os.path.exists(self.conf.path_embedding_model):
+        f_model = open(self.conf.path_embedding_model, "w")
+        f_model.write(str(self.data.vocab_size))
+        f_model.write(" ")
+        f_model.write(str(self.conf.word_dim))
+        f_model.write("\n")
 
-            vec = np.loadtxt(self.conf.path_output)
-            f_dic = open(self.conf.path_word, "r")
-            batch = ""
-            word_idx = 0
-            for line in f_dic:
-                word = line.split("\t")[0]
-                cur_line = " ".join([word] + [str(val) for val in vec[word_idx].tolist()])
-                word_idx += 1
-                batch = "\n".join([batch, cur_line])
-                if len(batch) > 100000:
-                    f_model.write(batch)
-                    batch = ""
-            f_model.write(batch)
+        vec = np.loadtxt(self.conf.path_output)
+        f_dic = open(self.conf.path_word, "r")
+        batch = ""
+        word_idx = 0
+        for line in f_dic:
+            word = line.split("\t")[0]
+            cur_line = " ".join([word] + [str(val) for val in vec[word_idx].tolist()])
+            word_idx += 1
+            batch = "\n".join([batch, cur_line])
+            if len(batch) > 100000:
+                f_model.write(batch)
+                batch = ""
+        f_model.write(batch)
 
         from gensim.models.word2vec import Word2Vec
 
@@ -119,8 +129,6 @@ class ReadingModel:
         while True:
             word = input("source word:")
             print(model.most_similar(word))
-
-
 
     def train(self):
         ph_x = tf.placeholder(tf.int32, [self.conf.batch_size, self.conf.sen_len], name="input_x")
@@ -209,15 +217,19 @@ class ReadingModel:
                 progress = float(idx_progress * self.conf.batch_size / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
-                np.savetxt(self.conf.path_embedding_model, vals["embedding"])
+                np.savetxt(self.conf.path_output, vals["embedding"])
             idx_progress += 1
 
 
 if __name__ == '__main__':
+    act = input("train or evaluate")
+
     conf = Config(mode="GPU")
     data = ReadingData(conf)
     model = ReadingModel(conf, data)
-    model.train()
-    # model.evaluate_embedding()
+    if act == "t":
+        model.train()
+    elif act == "e":
+        model.evaluate_embedding()
 
 

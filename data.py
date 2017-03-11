@@ -23,20 +23,20 @@ class DataProvider:
         self.idx2word = ["<UNK>"]
         self.data = []
 
-        # self.path = "".join([home, "/data/yelp/review.json"])
-        # self.path_word = "".join([home, "/data/yelp/processed/word.dict"])
-        # self.path_doc = "".join([home, "/data/yelp/processed/data.txt"])
-        # self.path_doc2 = "".join([home, "/data/yelp/processed/data2.txt"])
+        self.path = "".join([home, "/data/yelp/review.json"])
+        self.path_word = "".join([home, "/data/yelp/processed/word.dict"])
+        self.path_doc = "".join([home, "/data/yelp/processed/data.txt"])
+        self.path_doc2 = "".join([home, "/data/yelp/processed/data2.txt"])
         #
-        self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
-        self.path_news_doc = "".join([home,
-             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data.txt"])
-        self.path_news_dict = "".join([home,
-            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict.txt"])
+        # self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
+        # self.path_news_doc = "".join([home,
+        #      "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data.txt"])
+        # self.path_news_dict = "".join([home,
+        #     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict.txt"])
 
-        self.path = self.path_news
-        self.path_word = self.path_news_dict
-        self.path_doc = self.path_news_doc
+        # self.path = self.path_news
+        # self.path_word = self.path_news_dict
+        # self.path_doc = self.path_news_doc
         self.table_size = int(1e8)
 
         # self.populate_dict()
@@ -134,12 +134,64 @@ class DataProvider:
 
     def word_transform(self, word):
         word = word.lower()
-        word = self.stemmer.stem(word)
+        # word = self.stemmer.stem(word)
 
-        for i in range(len(word)):
-            if word[i] < 'a' or word[i] > 'z':
-                return "<UNK>"
+        # for i in range(len(word)):
+        #     if word[i] < 'a' or word[i] > 'z':
+        #         return "<UNK>"
         return word
+
+    def temp_yelp2(self):
+        import json
+
+        word2cnt = Counter()
+        word2idx = {"<UNK>": 0}
+
+        f = open(self.path, "r")
+        for line in f:
+            obj = json.loads(line)
+            text = obj["text"]
+            for word in text.split():
+                word = self.word_transform(word)
+                if word not in word2cnt:
+                    word2cnt[word] = 0
+                word2cnt[word] += 1
+        print("finished", "word2cnt")
+
+        word2cnt = word2cnt.most_common(20000)
+        for word, cnt in word2cnt:
+            word2idx[word] = len(word2idx)
+
+        f = open(self.path_word, "w")
+        for word, cnt in word2cnt:
+            f.write(word)
+            f.write("\t")
+            f.write(str(cnt))
+            f.write("\n")
+        f.close()
+
+        print("finished", "wordlist")
+
+        f_doc = open(self.path_doc, "w")
+        f = open(self.path, "r")
+        batch = ""
+        for line in f:
+            obj = json.loads(line)
+            text = obj["text"]
+            for sent in sent_tokenize(text):
+                cur_line = ""
+                for word in sent.split():
+                    word = self.word_transform(word)
+                    if word not in word2idx:
+                        word = "<UNK>"
+                    cur_line = " ".join((cur_line, str(word2idx[word])))
+                batch = "\n".join((batch, cur_line))
+            if len(batch) > 100000:
+                f_doc.write(batch)
+                batch = ""
+        f_doc.write(batch)
+        f_doc.close()
+
 
     # deprecated
     def temp_yelp(self):
@@ -237,7 +289,7 @@ class DataProvider:
             print("finished", file)
             # break
 
-        word2cnt = word2cnt.most_common()
+        word2cnt = word2cnt.most_common(20000)
         for word,cnt in word2cnt:
             word2idx[word] = len(word2idx)
 
@@ -285,7 +337,10 @@ class DataProvider:
 
 if __name__ == '__main__':
     ddd = DataProvider(0, negative_sampling=True)
-    print(ddd.path_news_doc)
-    # ddd.temp_yelp()
-    ddd.temp_news()
-    # np.save("cor_matrix", ddd.cor_matrix)
+    if True: #for yelp
+        ddd.temp_yelp2()
+    if False: #for news
+        print(ddd.path_news_doc)
+        # ddd.temp_yelp()
+        ddd.temp_news()
+        # np.save("cor_matrix", ddd.cor_matrix)
