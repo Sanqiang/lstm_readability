@@ -44,8 +44,8 @@ class Config:
         self.path_output = "".join([home,
             "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/model.txt"])
 
-        self.path_embedding_model = "".join([home,
-            "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/embedding.model"])
+        self.path_embedding_model = "embedding"
+            # "".join([home,"/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/embedding.model"])
 
 class ReadingData:
     def __init__(self, conf):
@@ -158,7 +158,7 @@ class ReadingModel:
         self._cost = tf.reduce_sum(loss) / self.conf.batch_size
         self._final_state = state
 
-        self._lr = tf.Variable(0.0, trainable=False)
+        self._lr = tf.Variable(1.0, trainable=False)
         tvars = tf.trainable_variables()
         grads, _ = tf.clip_by_global_norm(tf.gradients(self._cost, tvars),
                                           self.conf.max_grad_norm)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     conf = Config(mode="GPU")
     data = ReadingData(conf)
     model = ReadingModel(conf, data)
-    model.train()
-    # model.evaluate_embedding()
+    # model.train()
+    model.evaluate_embedding()
 
 
