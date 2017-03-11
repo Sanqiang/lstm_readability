@@ -243,8 +243,9 @@ class ReadingModel:
                 progress = float(idx_progress * self.conf.batch_size / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
-                self.print_out_evaluation("steak")
                 np.savetxt(self.conf.path_output, vals["embedding"])
+                self.print_out_evaluation("steak")
+
             idx_progress += 1
 
 
