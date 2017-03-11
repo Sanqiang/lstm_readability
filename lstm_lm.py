@@ -61,7 +61,7 @@ class ReadingData:
         self.conf = conf
         self.word2idx = {}
         self.idx2word = []
-        f_dic = open(self.conf.path_word, "r")
+        f_dic = open(self.conf.path_word, "r", encoding="utf-8")
         for line in f_dic:
             word = line.split("\t")[0]
             self.word2idx[word] = len(self.word2idx)
@@ -74,7 +74,7 @@ class ReadingData:
             batch_x = [[0] * self.conf.sen_len] * self.conf.batch_size
             batch_y = [[0] * self.conf.sen_len] * self.conf.batch_size
             batch_idx = 0
-            f_doc = open(self.conf.path_data, "r")
+            f_doc = open(self.conf.path_data, "r", encoding="utf-8")
             for line in f_doc:
                 words = line.split()
                 i = 0
