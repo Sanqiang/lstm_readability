@@ -101,13 +101,39 @@ class ReadingModel:
         # import logging
         # logging.getLogger().setLevel(logging.INFO)
 
+    def print_out_evaluation(self, word):
+        f_model = open(self.conf.path_embedding_model, "w")
+        f_model.write(str(self.data.vocab_size))
+        f_model.write(" ")
+        f_model.write(str(self.conf.word_dim))
+        # f_model.write("\n")
+
+        vec = np.loadtxt(self.conf.path_output)
+        f_dic = open(self.conf.path_word, "r")
+        batch = ""
+        word_idx = 0
+        for line in f_dic:
+            word = line.split("\t")[0]
+            cur_line = " ".join([word] + [str(val) for val in vec[word_idx].tolist()])
+            word_idx += 1
+            batch = "\n".join([batch, cur_line])
+            if len(batch) > 100000:
+                f_model.write(batch)
+                batch = ""
+        f_model.write(batch)
+
+        from gensim.models.word2vec import Word2Vec
+
+        model = Word2Vec.load_word2vec_format(self.conf.path_embedding_model)
+        print(model.most_similar(word))
+
     def evaluate_embedding(self):
         # if not os.path.exists(self.conf.path_embedding_model):
         f_model = open(self.conf.path_embedding_model, "w")
         f_model.write(str(self.data.vocab_size))
         f_model.write(" ")
         f_model.write(str(self.conf.word_dim))
-        f_model.write("\n")
+        # f_model.write("\n")
 
         vec = np.loadtxt(self.conf.path_output)
         f_dic = open(self.conf.path_word, "r")
@@ -212,11 +238,12 @@ class ReadingModel:
             vals = self.conf.sess.run(fetches, feed_dict)
             cost += vals["cost"]
             # state = vals["final_state"]
-            if idx_progress % 10 == 0:
+            if idx_progress % 1 == 0:
                 # cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
                 progress = float(idx_progress * self.conf.batch_size / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
+                # self.print_out_evaluation("good")
                 np.savetxt(self.conf.path_output, vals["embedding"])
             idx_progress += 1
 
