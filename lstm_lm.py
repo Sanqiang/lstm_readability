@@ -238,12 +238,12 @@ class ReadingModel:
             vals = self.conf.sess.run(fetches, feed_dict)
             cost += vals["cost"]
             # state = vals["final_state"]
-            if idx_progress % 1 == 0:
+            if idx_progress % 50 == 0:
                 # cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
                 progress = float(idx_progress * self.conf.batch_size / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
-                # self.print_out_evaluation("good")
+                self.print_out_evaluation("steak")
                 np.savetxt(self.conf.path_output, vals["embedding"])
             idx_progress += 1
 
