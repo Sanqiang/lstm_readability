@@ -31,6 +31,7 @@ class Config:
         self.sen_len = 50
         self.num_epochs = 100
         self.num_sen = 324085
+        self.max_grad_norm = 5
 
         self.word_dim = 300
         self.num_layers = 1
@@ -157,32 +158,59 @@ class ReadingModel:
         self._cost = tf.reduce_sum(loss) / self.conf.batch_size
         self._final_state = state
 
-        self.train_step = tf.train.GradientDescentOptimizer(self.conf.lr).minimize(self._cost)
+        self._lr = tf.Variable(0.0, trainable=False)
+        tvars = tf.trainable_variables()
+        grads, _ = tf.clip_by_global_norm(tf.gradients(self._cost, tvars),
+                                          self.conf.max_grad_norm)
+        optimizer = tf.train.GradientDescentOptimizer(self._lr)
+        self._train_op = optimizer.apply_gradients(
+            zip(grads, tvars),
+            global_step=tf.contrib.framework.get_or_create_global_step())
+
+        self._new_lr = tf.placeholder(
+            tf.float32, shape=[], name="new_learning_rate")
+        self._lr_update = tf.assign(self._lr, self._new_lr)
+
+        # self.train_step = tf.train.GradientDescentOptimizer(self.conf.lr).minimize(self._cost)
 
         gen = self.data.batch_generator()
         tf.global_variables_initializer().run()
         idx_epoch = 0
         idx_progress = 0.0
         self.conf.sess.run(self._initial_state)
+        fetches = {
+            "cost": self.cost,
+            "final_state": self.final_state,
+            "embedding": self.embedding,
+            "eval_op":self._train_op
+        }
+
         while True:
             batch_x, batch_y = next(gen)
             if batch_x is None or batch_y is None:
                 print("\t".join(["Epoch", str(idx_epoch), "Finished"]))
-                embedding_data = embedding.eval()
-                np.savetxt(self.conf.path_output, embedding_data)
+                # embedding_data = embedding.eval()
+                # np.savetxt(self.conf.path_output, embedding_data)
                 idx_epoch += 1
                 idx_progress = 0
                 if idx_epoch == self.conf.num_epochs:
                     break
                 else:
                     continue
-            self.conf.sess.run(self._final_state, feed_dict={ph_x: batch_x, ph_y: batch_y})
-            self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
+            feed_dict = {}
+            for i, (c, h) in enumerate(model.initial_state):
+                feed_dict[c] = state[i].c
+                feed_dict[h] = state[i].h
+
+            vals = self.conf.sess.run(fetches, feed_dict)
+            # self.conf.sess.run(self._final_state, feed_dict={ph_x: batch_x, ph_y: batch_y})
+            # self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             if idx_progress % 100 == 0:
-                cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
+                # cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
                 progress = float(idx_progress / self.conf.num_sen)
-                sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(cost), "\n"]))
+                sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(vals["cost"]), "\n"]))
                 sys.stdout.flush()
+                np.savetxt(self.conf.path_output, vals["embedding"])
             idx_progress += 1
 
 
