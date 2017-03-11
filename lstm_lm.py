@@ -2,7 +2,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import sys
-import gensim
+from gensim.models.keyedvectors import KeyedVectors
 
 home = os.environ["HOME"]
 
@@ -123,7 +123,7 @@ class ReadingModel:
                 batch = ""
         f_model.write(batch)
 
-        model = gensim.models.KeyedVectors(self.conf.path_embedding_model)
+        model = KeyedVectors.load_word2vec_format(self.conf.path_embedding_model, binary=False)
         print(model.most_similar(word))
 
     def evaluate_embedding(self):
@@ -148,7 +148,7 @@ class ReadingModel:
                 batch = ""
         f_model.write(batch)
 
-        model = gensim.models.KeyedVectors(self.conf.path_embedding_model)
+        model = KeyedVectors.load_word2vec_format(self.conf.path_embedding_model, binary=False)
         while True:
             word = input("source word:")
             print(model.most_similar(word))
