@@ -186,10 +186,10 @@ class ReadingModel:
 
 
 if __name__ == '__main__':
-    conf = Config(mode="CPU")
+    conf = Config(mode="GPU")
     data = ReadingData(conf)
     model = ReadingModel(conf, data)
-    # model.train()
-    model.evaluate_embedding()
+    model.train()
+    # model.evaluate_embedding()
 
 
