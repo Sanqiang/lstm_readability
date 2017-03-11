@@ -180,7 +180,7 @@ class ReadingModel:
             self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
             progress = float(idx_progress / self.conf.num_sen)
-            sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(cost)]))
+            sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(cost), "\n"]))
             sys.stdout.flush()
             idx_progress += 1
 
