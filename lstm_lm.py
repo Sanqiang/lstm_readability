@@ -7,7 +7,7 @@ home = os.environ["HOME"]
 
 class Config:
     def gpu_config(self):
-        self.batch_size = 100
+        self.batch_size = 200
         self.processor = "/gpu:2"
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "2"
