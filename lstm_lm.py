@@ -158,7 +158,7 @@ class ReadingModel:
         self._cost = tf.reduce_sum(loss) / self.conf.batch_size
         self._final_state = state
 
-        self._lr = tf.Variable(1.0, trainable=False)
+        self._lr = tf.Variable(self.conf.lr, trainable=False)
         tvars = tf.trainable_variables()
         grads, _ = tf.clip_by_global_norm(tf.gradients(self._cost, tvars),
                                           self.conf.max_grad_norm)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     conf = Config(mode="GPU")
     data = ReadingData(conf)
     model = ReadingModel(conf, data)
-    # model.train()
-    model.evaluate_embedding()
+    model.train()
+    # model.evaluate_embedding()
 
 
