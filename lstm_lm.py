@@ -134,9 +134,9 @@ class ReadingModel:
         self._initial_state = cell.zero_state(self.conf.batch_size, tf.float32)
 
         with tf.device(self.conf.processor):
-            embedding = tf.get_variable(
+            self.embedding = tf.get_variable(
                 "embedding", [self.data.vocab_size, self.conf.word_dim], dtype=tf.float32)
-            inputs = tf.nn.embedding_lookup(embedding, ph_x)
+            inputs = tf.nn.embedding_lookup(self.embedding, ph_x)
 
         outputs = []
         state = self._initial_state
@@ -179,8 +179,8 @@ class ReadingModel:
         idx_progress = 0.0
         self.conf.sess.run(self._initial_state)
         fetches = {
-            "cost": self.cost,
-            "final_state": self.final_state,
+            "cost": self._cost,
+            "final_state": self._final_state,
             "embedding": self.embedding,
             "eval_op":self._train_op
         }
