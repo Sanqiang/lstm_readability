@@ -154,7 +154,7 @@ class ReadingModel:
             [logits],
             [tf.reshape(ph_y, [-1])],
             [tf.ones([self.conf.batch_size * self.conf.sen_len], dtype=tf.float32)])
-        self._cost = cost = tf.reduce_sum(loss) / self.conf.batch_size
+        self._cost = tf.reduce_sum(loss) / self.conf.batch_size
         self._final_state = state
 
         self.train_step = tf.train.GradientDescentOptimizer(self.conf.lr).minimize(self._cost)
@@ -163,6 +163,7 @@ class ReadingModel:
         tf.global_variables_initializer().run()
         idx_epoch = 0
         idx_progress = 0.0
+        self.conf.sess.run(self._initial_state)
         while True:
             batch_x, batch_y = next(gen)
             if batch_x is None or batch_y is None:
@@ -175,10 +176,11 @@ class ReadingModel:
                     break
                 else:
                     continue
-
+            self.conf.sess.run(self._final_state, feed_dict={ph_x: batch_x, ph_y: batch_y})
             self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
+            cost = self.conf.sess.run(self._cost)
             progress = float(idx_progress / self.conf.num_sen)
-            sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress)]))
+            sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(cost)]))
             sys.stdout.flush()
             idx_progress += 1
 
