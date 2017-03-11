@@ -8,7 +8,7 @@ home = os.environ["HOME"]
 class Config:
     def gpu_config(self):
         self.batch_size = 200
-        self.processor = "/gpu:2"
+        # self.processor = "/gpu:2"
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "2"
         config = tf.ConfigProto(log_device_placement=True, allow_soft_placement=True)
@@ -17,7 +17,7 @@ class Config:
 
     def cpu_config(self):
         self.batch_size = 100
-        self.processor = "/cpu:0"
+        # self.processor = "/cpu:0"
         self.sess = tf.InteractiveSession()
 
     def __init__(self, mode = "GPU"):
@@ -123,8 +123,8 @@ class ReadingModel:
 
 
     def train(self):
-        ph_x = tf.placeholder(tf.int32, [None, self.conf.sen_len], name="input_x")
-        ph_y = tf.placeholder(tf.int32, [None, self.conf.sen_len], name="input_y")
+        ph_x = tf.placeholder(tf.int32, [self.conf.batch_size, self.conf.sen_len], name="input_x")
+        ph_y = tf.placeholder(tf.int32, [self.conf.batch_size, self.conf.sen_len], name="input_y")
 
         def lstm_cell():
             return tf.contrib.rnn.BasicLSTMCell(
@@ -133,7 +133,7 @@ class ReadingModel:
             [lstm_cell() for _ in range(self.conf.num_layers)], state_is_tuple=True)
         self._initial_state = cell.zero_state(self.conf.batch_size, tf.float32)
 
-        with tf.device(self.conf.processor):
+        with tf.device("/cpu:0"):
             self.embedding = tf.get_variable(
                 "embedding", [self.data.vocab_size, self.conf.word_dim], dtype=tf.float32)
             inputs = tf.nn.embedding_lookup(self.embedding, ph_x)
@@ -175,12 +175,13 @@ class ReadingModel:
 
         gen = self.data.batch_generator()
         tf.global_variables_initializer().run()
+        cost = 0.0
         idx_epoch = 0
-        idx_progress = 0.0
+        idx_progress = 1.0
         state = self.conf.sess.run(self._initial_state)
         fetches = {
             "cost": self._cost,
-            "final_state": self._final_state,
+            # "final_state": self._final_state,
             "embedding": self.embedding,
             "eval_op":self._train_op
         }
@@ -189,30 +190,23 @@ class ReadingModel:
             batch_x, batch_y = next(gen)
             if batch_x is None or batch_y is None:
                 print("\t".join(["Epoch", str(idx_epoch), "Finished"]))
-                # embedding_data = embedding.eval()
-                # np.savetxt(self.conf.path_output, embedding_data)
                 idx_epoch += 1
-                idx_progress = 0
+                idx_progress = 1
                 if idx_epoch == self.conf.num_epochs:
                     break
                 else:
                     continue
             feed_dict = {}
-            for i, (c, h) in enumerate(model._initial_state):
-                feed_dict[c] = state[i].c
-                feed_dict[h] = state[i].h
             feed_dict[ph_x] = batch_x
             feed_dict[ph_y] = batch_y
 
             vals = self.conf.sess.run(fetches, feed_dict)
-            cost = vals["cost"]
-            state = vals["final_state"]
-            # self.conf.sess.run(self._final_state, feed_dict={ph_x: batch_x, ph_y: batch_y})
-            # self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
+            cost += vals["cost"]
+            # state = vals["final_state"]
             if idx_progress % 100 == 0:
                 # cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
                 progress = float(idx_progress / self.conf.num_sen)
-                sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(vals["cost"]), "\n"]))
+                sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
                 np.savetxt(self.conf.path_output, vals["embedding"])
             idx_progress += 1
