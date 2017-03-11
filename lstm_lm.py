@@ -35,7 +35,7 @@ class Config:
 
         self.word_dim = 300
         self.num_layers = 1
-        self.lr = 0.001
+        self.lr = 1.0
 
         self.path_data = "".join([home,
              "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data2.txt"])
@@ -191,6 +191,7 @@ class ReadingModel:
             if batch_x is None or batch_y is None:
                 print("\t".join(["Epoch", str(idx_epoch), "Finished"]))
                 idx_epoch += 1
+                cost = 0.0
                 idx_progress = 1
                 if idx_epoch == self.conf.num_epochs:
                     break
@@ -203,12 +204,12 @@ class ReadingModel:
             vals = self.conf.sess.run(fetches, feed_dict)
             cost += vals["cost"]
             # state = vals["final_state"]
-            if idx_progress % 100 == 0:
+            if idx_progress % 10 == 0:
                 # cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
                 progress = float(idx_progress / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
-                np.savetxt(self.conf.path_output, vals["embedding"])
+                np.savetxt(self.conf.path_embedding_model, vals["embedding"])
             idx_progress += 1
 
 
