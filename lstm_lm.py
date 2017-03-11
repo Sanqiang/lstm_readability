@@ -102,14 +102,14 @@ class ReadingModel:
         # logging.getLogger().setLevel(logging.INFO)
 
     def print_out_evaluation(self, word):
-        f_model = open(self.conf.path_embedding_model, "w")
+        f_model = open(self.conf.path_embedding_model, "w", encoding="utf-8")
         f_model.write(str(self.data.vocab_size))
         f_model.write(" ")
         f_model.write(str(self.conf.word_dim))
         # f_model.write("\n")
 
         vec = np.loadtxt(self.conf.path_output)
-        f_dic = open(self.conf.path_word, "r")
+        f_dic = open(self.conf.path_word, "r", encoding="utf-8")
         batch = ""
         word_idx = 0
         for line in f_dic:
@@ -129,14 +129,14 @@ class ReadingModel:
 
     def evaluate_embedding(self):
         # if not os.path.exists(self.conf.path_embedding_model):
-        f_model = open(self.conf.path_embedding_model, "w")
+        f_model = open(self.conf.path_embedding_model, "w", encoding="utf-8")
         f_model.write(str(self.data.vocab_size))
         f_model.write(" ")
         f_model.write(str(self.conf.word_dim))
         # f_model.write("\n")
 
         vec = np.loadtxt(self.conf.path_output)
-        f_dic = open(self.conf.path_word, "r")
+        f_dic = open(self.conf.path_word, "r", encoding="utf-8")
         batch = ""
         word_idx = 0
         for line in f_dic:
