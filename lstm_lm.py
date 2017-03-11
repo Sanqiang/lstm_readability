@@ -206,7 +206,7 @@ class ReadingModel:
             # state = vals["final_state"]
             if idx_progress % 10 == 0:
                 # cost = self.conf.sess.run(self._cost, feed_dict={ph_x:batch_x, ph_y:batch_y})
-                progress = float(idx_progress / self.conf.num_sen)
+                progress = float(idx_progress * self.conf.batch_size / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(np.exp(vals["cost"] / idx_progress)), "\n"]))
                 sys.stdout.flush()
                 np.savetxt(self.conf.path_embedding_model, vals["embedding"])
