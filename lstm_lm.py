@@ -177,7 +177,7 @@ class ReadingModel:
         tf.global_variables_initializer().run()
         idx_epoch = 0
         idx_progress = 0.0
-        self.conf.sess.run(self._initial_state)
+        state = self.conf.sess.run(self._initial_state)
         fetches = {
             "cost": self._cost,
             "final_state": self._final_state,
@@ -210,7 +210,7 @@ class ReadingModel:
                 progress = float(idx_progress / self.conf.num_sen)
                 sys.stdout.write("\t".join(["Current epoch", str(idx_epoch), "with progress", str(progress), "with cost", str(vals["cost"]), "\n"]))
                 sys.stdout.flush()
-                np.savetxt(self.conf.path_output, vals["embedding"])
+                np.savetxt(self.conf.path_output, vals["embedding"].eval())
             idx_progress += 1
 
 
