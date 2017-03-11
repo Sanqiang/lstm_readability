@@ -123,9 +123,7 @@ class ReadingModel:
                 batch = ""
         f_model.write(batch)
 
-        from gensim.models.word2vec import Word2Vec
-
-        model = Word2Vec.load_word2vec_format(self.conf.path_embedding_model)
+        model = gensim.models.KeyedVectors(self.conf.path_embedding_model)
         print(model.most_similar(word))
 
     def evaluate_embedding(self):
