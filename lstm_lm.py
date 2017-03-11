@@ -167,9 +167,9 @@ class ReadingModel:
             zip(grads, tvars),
             global_step=tf.contrib.framework.get_or_create_global_step())
 
-        self._new_lr = tf.placeholder(
-            tf.float32, shape=[], name="new_learning_rate")
-        self._lr_update = tf.assign(self._lr, self._new_lr)
+        # self._new_lr = tf.placeholder(
+        #     tf.float32, shape=[], name="new_learning_rate")
+        # self._lr_update = tf.assign(self._lr, self._new_lr)
 
         # self.train_step = tf.train.GradientDescentOptimizer(self.conf.lr).minimize(self._cost)
 
@@ -205,6 +205,8 @@ class ReadingModel:
             feed_dict[ph_y] = batch_y
 
             vals = self.conf.sess.run(fetches, feed_dict)
+            cost = vals["cost"]
+            state = vals["final_state"]
             # self.conf.sess.run(self._final_state, feed_dict={ph_x: batch_x, ph_y: batch_y})
             # self.conf.sess.run(self.train_step, feed_dict={ph_x:batch_x, ph_y:batch_y})
             if idx_progress % 100 == 0:
