@@ -201,8 +201,8 @@ class ReadingModel:
             for i, (c, h) in enumerate(model._initial_state):
                 feed_dict[c] = state[i].c
                 feed_dict[h] = state[i].h
-            feed_dict["ph_x"] = batch_x
-            feed_dict["ph_y"] = batch_y
+            feed_dict[ph_x] = batch_x
+            feed_dict[ph_y] = batch_y
 
             vals = self.conf.sess.run(fetches, feed_dict)
             # self.conf.sess.run(self._final_state, feed_dict={ph_x: batch_x, ph_y: batch_y})
