@@ -151,6 +151,7 @@ class ReadingModel:
         model = KeyedVectors.load_word2vec_format(self.conf.path_embedding_model, binary=False)
         while True:
             word = input("source word:")
+
             print(model.most_similar(word))
 
     def train(self):
