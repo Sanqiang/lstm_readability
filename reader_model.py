@@ -157,7 +157,7 @@ class Model(object):
     self._lr_update = tf.assign(self._lr, self._new_lr)
 
   def print_out_evaluation(self, word):
-      f_model = open(FLAGS.embedding_w2v_path, "w", encoding="utf-8")
+      f_model = open(FLAGS.embedding_w2v_path, "w")
       f_model.write(str(self.data_provider.vocab_size))
       f_model.write(" ")
       f_model.write(str(self.conf.hidden_size))
@@ -212,7 +212,7 @@ class Model(object):
 class SmallConfig(object):
   """Small config."""
   init_scale = 0.1
-  learning_rate = 1.0
+  learning_rate = 10.0
   max_grad_norm = 5
   num_layers = 2
   num_steps = 50
