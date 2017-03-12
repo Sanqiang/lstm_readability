@@ -157,7 +157,7 @@ class Model(object):
     self._lr_update = tf.assign(self._lr, self._new_lr)
 
   def print_out_evaluation(self, word):
-      f_model = open(FLAGS.embedding_w2v_path, "w")
+      f_model = open(FLAGS.embedding_w2v_path, "w", encoding="utf-8")
       f_model.write(str(self.data_provider.vocab_size))
       f_model.write(" ")
       f_model.write(str(self.conf.hidden_size))
@@ -212,7 +212,7 @@ class Model(object):
 class SmallConfig(object):
   """Small config."""
   init_scale = 0.1
-  learning_rate = 10.0
+  learning_rate = 100.0
   max_grad_norm = 5
   num_layers = 2
   num_steps = 50
@@ -221,7 +221,7 @@ class SmallConfig(object):
   max_max_epoch = 13
   keep_prob = 1.0
   lr_decay = 1.0
-  batch_size = 200
+  batch_size = 100
   vocab_size = 20000
   epoch_size = 22397781 // batch_size
 
@@ -316,7 +316,7 @@ def run_epoch(session, model, data_provider, config, eval_op=None, verbose=False
     costs += cost
     iters += config.num_steps
 
-    if verbose and idx_epoch % 10 == 0:
+    if verbose and idx_epoch % 100 == 0:
       print("%.3f perplexity: %.3f speed: %.0f wps" %
             (idx_epoch * config.batch_size * 1.0 / config.epoch_size, np.exp(costs / iters),
              iters * config.batch_size / (time.time() - start_time)))
@@ -390,9 +390,9 @@ def main(_):
       # test_perplexity = run_epoch(session, mtest)
       # print("Test Perplexity: %.3f" % test_perplexity)
 
-      if FLAGS.save_path:
-        print("Saving model to %s." % FLAGS.save_path)
-        sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
+      # if FLAGS.save_path:
+      #   print("Saving model to %s." % FLAGS.save_path)
+      #   sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
 
 
 if __name__ == "__main__":
