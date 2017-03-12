@@ -156,7 +156,7 @@ class Model(object):
         tf.float32, shape=[], name="new_learning_rate")
     self._lr_update = tf.assign(self._lr, self._new_lr)
 
-  def print_out_evaluation(self, word):
+  def print_out_evaluation(self, target_words):
       f_model = open(FLAGS.embedding_w2v_path, "w", encoding="utf-8")
       f_model.write(str(self.data_provider.vocab_size))
       f_model.write(" ")
@@ -179,7 +179,8 @@ class Model(object):
       f_dic.close()
 
       w2vmodel = KeyedVectors.load_word2vec_format(FLAGS.embedding_w2v_path, binary=False)
-      print(w2vmodel.most_similar(word))
+      for target_word in target_words:
+        print(w2vmodel.most_similar(target_word))
 
   def assign_lr(self, session, lr_value):
     session.run(self._lr_update, feed_dict={self._new_lr: lr_value})
@@ -212,16 +213,16 @@ class Model(object):
 class SmallConfig(object):
   """Small config."""
   init_scale = 0.1
-  learning_rate = 100.0
-  max_grad_norm = 5
-  num_layers = 2
+  learning_rate = 1.0
+  max_grad_norm = 10
+  num_layers = 1
   num_steps = 50
   hidden_size = 200
   max_epoch = 100
   max_max_epoch = 13
   keep_prob = 1.0
   lr_decay = 1.0
-  batch_size = 100
+  batch_size = 200
   vocab_size = 20000
   epoch_size = 22397781 // batch_size
 
@@ -322,7 +323,7 @@ def run_epoch(session, model, data_provider, config, eval_op=None, verbose=False
              iters * config.batch_size / (time.time() - start_time)))
       emb = model.embedding.eval(session=session)
       np.savetxt(FLAGS.embedding_path, emb)
-      model.print_out_evaluation("steak")
+      model.print_out_evaluation(["steak", "seafood", "the"])
     idx_epoch += 1
 
   return np.exp(costs / iters)
