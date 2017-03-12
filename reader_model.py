@@ -181,9 +181,10 @@ class Model(object):
       w2vmodel = KeyedVectors.load_word2vec_format(FLAGS.embedding_w2v_path, binary=False)
       batch = ""
       for target_word in target_words:
-        cur_line = "\t".join([target_word, str(w2vmodel.most_similar(target_word))])
+        cur_line = "\t\t".join([target_word, str(w2vmodel.most_similar(target_word))])
         batch = "\n".join([batch, cur_line])
       print(batch)
+      print("==================")
 
   def assign_lr(self, session, lr_value):
     session.run(self._lr_update, feed_dict={self._new_lr: lr_value})
