@@ -175,6 +175,8 @@ class Model(object):
               f_model.write(batch)
               batch = ""
       f_model.write(batch)
+      f_model.close()
+      f_dic.close()
 
       w2vmodel = KeyedVectors.load_word2vec_format(FLAGS.embedding_w2v_path, binary=False)
       print(w2vmodel.most_similar(word))
