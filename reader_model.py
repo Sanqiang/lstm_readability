@@ -226,7 +226,7 @@ class SmallConfig(object):
   max_max_epoch = 50
   keep_prob = 1.0
   lr_decay = 1.0
-  batch_size = 300
+  batch_size = 1000
   vocab_size = 20000
   epoch_size = 22397781 // batch_size
 
@@ -295,13 +295,15 @@ def run_epoch(session, model, data_provider, config, eval_op=None, verbose=False
     fetches["eval_op"] = eval_op
 
   idx_epoch = 0
+  cost = 0.0
   while True:
     batch_input, batch_targets = next(gen)
     if batch_input is None or batch_targets is None:
         print("\t".join(["Epoch", str(idx_epoch), "Finished"]))
         idx_epoch += 1
-        # cost = 0.0
-        # idx_progress = 1
+        emb = model.embedding.eval(session=session)
+        np.savetxt(FLAGS.embedding_path, emb)
+        model.print_out_evaluation(["steak", "seafood", "the"])
         if idx_epoch == FLAGS.num_epochs:
             break
         else:
@@ -315,19 +317,16 @@ def run_epoch(session, model, data_provider, config, eval_op=None, verbose=False
 
     vals = session.run(fetches, feed_dict)
 
-    cost = vals["cost"]
+    cost += vals["cost"]
     # state = vals["final_state"]
 
     costs += cost
-    iters += config.num_steps
+    iters += config.num_steps * config.batch_size
 
-    if verbose and idx_epoch % 100 == 0:
+    if verbose and idx_epoch % 1000 == 0:
       print("%.3f perplexity: %.3f speed: %.0f wps" %
             (idx_epoch * config.batch_size * 1.0 / config.epoch_size, np.exp(costs / iters),
              iters * config.batch_size / (time.time() - start_time)))
-      emb = model.embedding.eval(session=session)
-      np.savetxt(FLAGS.embedding_path, emb)
-      model.print_out_evaluation(["steak", "seafood", "the"])
     idx_epoch += 1
 
   return np.exp(costs / iters)
