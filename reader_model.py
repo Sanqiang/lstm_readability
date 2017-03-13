@@ -220,7 +220,7 @@ class SmallConfig(object):
   learning_rate = 1.0
   max_grad_norm = 10
   num_layers = 1
-  num_steps = 50
+  num_steps = 20
   hidden_size = 200
   max_epoch = 100
   max_max_epoch = 50
@@ -301,9 +301,6 @@ def run_epoch(session, model, data_provider, config, eval_op=None, verbose=False
     if batch_input is None or batch_targets is None:
         print("\t".join(["Epoch", str(idx_epoch), "Finished"]))
         idx_epoch += 1
-        emb = model.embedding.eval(session=session)
-        np.savetxt(FLAGS.embedding_path, emb)
-        model.print_out_evaluation(["steak", "seafood", "the"])
         if idx_epoch == FLAGS.num_epochs:
             break
         else:
@@ -320,13 +317,16 @@ def run_epoch(session, model, data_provider, config, eval_op=None, verbose=False
     cost += vals["cost"]
     # state = vals["final_state"]
 
-    costs += cost
+    costs = cost
     iters += config.num_steps * config.batch_size
 
     if verbose and idx_epoch % 1000 == 0:
       print("%.3f perplexity: %.3f speed: %.0f wps" %
-            (idx_epoch * config.batch_size * 1.0 / config.epoch_size, np.exp(costs / iters),
+            (idx_epoch * 1.0 / config.epoch_size, np.exp(costs / iters),
              iters * config.batch_size / (time.time() - start_time)))
+      emb = model.embedding.eval(session=session)
+      np.savetxt(FLAGS.embedding_path, emb)
+      model.print_out_evaluation(["steak", "seafood", "the"])
     idx_epoch += 1
 
   return np.exp(costs / iters)
