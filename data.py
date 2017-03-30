@@ -1,346 +1,60 @@
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.stem.snowball import SnowballStemmer
 import os
-from os import listdir
-import numpy as np
-import random
-from collections import Counter
-from collections import deque
-from scipy.sparse import dok_matrix
+import tensorflow as tf
+import collections
 
 home = os.environ["HOME"]
 
-class DataProvider:
-    def __init__(self, batch_size, negative_sampling = False):
-        self.negative_sampling = negative_sampling
+class Config:
+    def __init__(self):
+        data_path = "/".join("data")
+        self.train_path = os.path.join(data_path, "data.txt")
 
-        self.batch_size = batch_size
-        #self.path = "".join([home,
-        #                     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/"])
-        self.max_sent_len = 50
-        self.stemmer = SnowballStemmer("english")
-        self.word2idx = {"<UNK>": 0}
-        self.idx2word = ["<UNK>"]
-        self.data = []
-
-        self.path = "".join([home, "/data/yelp/review.json"])
-        self.path_word = "".join([home, "/data/yelp/processed/word.dict"])
-        self.path_doc = "".join([home, "/data/yelp/processed/data.txt"])
-        self.path_doc2 = "".join([home, "/data/yelp/processed/data2.txt"])
-        #
-        # self.path_news = "".join([home, "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled"])
-        # self.path_news_doc = "".join([home,
-        #      "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/data.txt"])
-        # self.path_news_dict = "".join([home,
-        #     "/data/1-billion-word-language-modeling-benchmark-r13output/training-monolingual.tokenized.shuffled/dict.txt"])
-
-        # self.path = self.path_news
-        # self.path_word = self.path_news_dict
-        # self.path_doc = self.path_news_doc
-        self.table_size = int(1e8)
-
-        # self.populate_dict()
-        # self.populate_data()
-
-    def populate_dict(self):
-        f = open(self.path_word, "r")
-        for line in f:
-            words = line.split()
-            for word in words:
-                word = word.strip()
-                if word not in self.word2idx:
-                    self.word2idx[word] = len(self.word2idx)
-                    self.idx2word.append(word)
-
-    def populate_data(self):
-        if self.negative_sampling:
-            self.word2cnt = {}
-
-        f = open(self.path_doc, "r")
-        for line in f:
-            word_idxs = line.split()
-            self.data.append([int(word_idx) for word_idx in word_idxs])
-            if self.negative_sampling:
-                for word_idx in word_idxs:
-                    word_idx = int(word_idx)
-                    if word_idx not in self.word2cnt:
-                        self.word2cnt[word_idx] = 0
-                    self.word2cnt[word_idx] += 1
-        if self.negative_sampling:
-            denom = 0
-            for idx in range(1, len(self.word2cnt)):
-                word_idx = list(self.word2cnt.keys())[idx]
-                denom += self.word2cnt[word_idx] ** 0.75
-            for word_idx in self.word2cnt:
-                self.word2cnt[word_idx] = (self.word2cnt[word_idx] ** 0.75) / denom
-
-            self.table = [0] * self.table_size
-            i = 1
-            d1 = self.word2cnt[i]
-            for a in range(self.table_size):
-                self.table[a] = i
-                if a/self.table_size > d1:
-                    i += 1
-                    if i >= len(self.word2cnt):
-                        i = len(self.word2cnt) - 1
-                    d1 += self.word2cnt[i]
+        self.batch_size = 20
+        self.vocab_size = 10000
 
 
-    def get_data(self, include_negative, random_pick = False):
-        words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
-        words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
-        pseudo_output = np.zeros((self.batch_size, self.max_sent_len * 2))
-        batch_idx = 0
-        while True:
-            random.shuffle(self.data)
-            for sent in self.data:
-                if random_pick:
-                    ran_idx = random.randint(0, len(self.data))
-                    sent = self.data[ran_idx]
+class Data:
+    def __init__(self, conf):
+        self.conf = conf
+        self.populate()
 
-                for i in range(len(sent)):
-                    if i >= self.max_sent_len:
-                        break
-                    words_input_pos[batch_idx, i] = sent[i]
+    def populate(self):
+        self.word_to_id = self.read_words(self.conf.train_path)
+        self.train_data = self.file_to_word_ids(self.conf.train_path, self.word_to_id)
 
-                if include_negative:
-                    trials = 100
-                    add_neg = True
-                    for i in range(min(len(sent), self.max_sent_len)):
-                        word_sample = self.table[random.randint(1, self.table_size - 1)]
-                        while word_sample in sent:
-                            if trials <= 0:
-                                add_neg = False
-                                break
-                            trials -= 1
-                            word_sample = self.table[random.randint(1, self.table_size - 1)]
-                        if add_neg:
-                            words_input_neg[batch_idx, i] = word_sample
-                        else:
-                            words_input_neg[batch_idx, i] = 0
+    '''
+    Helper function
+    '''
+    def read_words(self, filename):
+        with tf.gfile.GFile(filename, "r") as f:
+            return [self.transform_word(w) for w in f.read().replace("\n", "<eos>").split()]
 
-                batch_idx += 1
 
-                if batch_idx == self.batch_size:
-                    if include_negative:
-                        yield ({"words_input_pos": words_input_pos, "words_input_neg": words_input_neg},
-                               {"merge_layer": pseudo_output})
-                    else:
-                        yield ({"words_input_pos": words_input_pos},
-                               {"merge_layer": pseudo_output})
-                    words_input_pos = np.zeros((self.batch_size, self.max_sent_len))
-                    words_input_neg = np.zeros((self.batch_size, self.max_sent_len))
-                    batch_idx = 0
+    def read_words_by_sections(self, filename):
+        #todo
+        return None
 
-    def word_transform(self, word):
-        word = word.lower()
-        # word = self.stemmer.stem(word)
+    def build_vocab(self, filename):
+        data = self.read_words(filename)
 
-        # for i in range(len(word)):
-        #     if word[i] < 'a' or word[i] > 'z':
-        #         return "<UNK>"
+        counter = collections.Counter(data)
+        counter = counter.most_common(self.conf.vocab_size)
+        count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+
+        words, _ = list(zip(*count_pairs))
+        word_to_id = dict(zip(words, range(len(words))))
+
+        return word_to_id
+
+    def file_to_word_ids(self, filename, word_to_id):
+      data = self.read_words(filename)
+      return [word_to_id[word] for word in data if word in word_to_id]
+
+    def transform_word(self, word):
+        if not word[0].isalpha():
+            word = word[1:]
+        if not word[-1].isalpha():
+            word = word[:-1]
         return word
 
-    def temp_yelp2(self):
-        import json
 
-        word2cnt = Counter()
-        word2idx = {"<UNK>": 0}
-
-        f = open(self.path, "r")
-        for line in f:
-            obj = json.loads(line)
-            text = obj["text"]
-            for word in text.split():
-                word = self.word_transform(word)
-                if word not in word2cnt:
-                    word2cnt[word] = 0
-                word2cnt[word] += 1
-        print("finished", "word2cnt")
-
-        word2cnt = word2cnt.most_common(20000)
-        for word, cnt in word2cnt:
-            word2idx[word] = len(word2idx)
-
-        f = open(self.path_word, "w")
-        for word, cnt in word2cnt:
-            f.write(word)
-            f.write("\t")
-            f.write(str(cnt))
-            f.write("\n")
-        f.close()
-
-        print("finished", "wordlist")
-
-        f_doc = open(self.path_doc, "w")
-        f = open(self.path, "r")
-        batch = ""
-        for line in f:
-            obj = json.loads(line)
-            text = obj["text"]
-            for sent in sent_tokenize(text):
-                cur_line = ""
-                for word in sent.split():
-                    word = self.word_transform(word)
-                    if word not in word2idx:
-                        word = "<UNK>"
-                    cur_line = " ".join((cur_line, str(word2idx[word])))
-                batch = "\n".join((batch, cur_line))
-            if len(batch) > 100000:
-                f_doc.write(batch)
-                batch = ""
-        f_doc.write(batch)
-        f_doc.close()
-
-
-    # deprecated
-    def temp_yelp(self):
-        import json
-        word2idx = {"<UNK>": 0}
-        idx2word =["<UNK>"]
-
-        f = open(self.path, "r")
-        f_doc = open(self.path_doc, "w")
-        data = ""
-        for line in f:
-            obj = json.loads(line)
-            text = obj["text"]
-            for sent in sent_tokenize(text):
-                data_cur = ""
-                wordidxs = word_tokenize(sent)
-                self.max_sent_len = max(self.max_sent_len, len(wordidxs))
-                for wordidx in wordidxs:
-                    wordidx = self.word_transform(wordidx)
-                    if wordidx not in word2idx:
-                        word2idx[wordidx] = len(word2idx)
-                        idx2word.append(wordidx)
-                    data_cur = " ".join([data_cur, str(word2idx[wordidx])])
-            data = "\n".join([data, data_cur])
-            if len(data) >= 100000:
-                f_doc.write(data)
-                data = ""
-        f_doc.write(data)
-        f_doc.close()
-
-
-        print(self.max_sent_len) #787
-
-
-        # refine
-        f_doc = open(self.path_doc, "r")
-        wordidx_cnt = {}
-        for line in f_doc:
-            wordidxs = line.split()
-            for wordidx in wordidxs:
-                if wordidx not in wordidx_cnt:
-                    wordidx_cnt[wordidx] = 0
-                wordidx_cnt[wordidx] += 1
-        f_doc = open(self.path_doc, "r")
-        data = ""
-        f_doc2 = open(self.path_doc2, "w")
-        nword2idx = {"<UNK>":0}
-        nidx2word = ["<UNK>"]
-        for line in f_doc:
-            data_cur = ""
-            wordidxs = line.split()
-            for wordidx in wordidxs:
-                if wordidx_cnt[wordidx] >= 3:
-                    if wordidx not in nword2idx:
-                        nword2idx[idx2word[int(wordidx)]] = len(nword2idx)
-                        nidx2word.append(idx2word[int(wordidx)])
-                    nwordidx = nword2idx[idx2word[int(wordidx)]]
-                    data_cur = " ".join([data_cur, str(nwordidx)])
-
-
-            data = "\n".join([data, data_cur])
-            if len(data) >= 100000:
-                f_doc2.write(data)
-                data = ""
-        f_doc2.write(data)
-        f_doc2.close()
-
-        word_list = ""
-        for wordidx in nidx2word:
-            word_list = "\n".join([word_list, wordidx])
-        f_word = open(self.path_word, "w")
-        f_word.write(word_list)
-        f_word.close()
-
-    def temp_news(self):
-        from nltk.tokenize import word_tokenize, sent_tokenize
-
-        word2cnt = Counter()
-        word2idx = {}
-
-        files = os.listdir(self.path_news)
-        for file in files:
-            if file[0:4] != "news":
-                continue
-            file = "/".join([self.path_news, file])
-            for text in open(file, "r"):
-                lines = sent_tokenize(text)
-                for line in lines:
-                    words = word_tokenize(line)
-                    for word in words:
-                        word = self.word_transform(word)
-                        if word not in word2cnt:
-                            word2cnt[word] = 0
-                        word2cnt[word] += 1
-            print("finished", file)
-            # break
-
-        word2cnt = word2cnt.most_common(20000)
-        for word,cnt in word2cnt:
-            word2idx[word] = len(word2idx)
-
-        print("finish word count", str(len(word2cnt)))
-        # nword2cnt = {}
-        # for word in word2cnt:
-        #     if word2cnt[word] > 5:
-        #         nword2cnt[word] = word2cnt[word]
-        # word2cnt = nword2cnt
-        # print("current word count", str(len(word2cnt)))
-        f = open(self.path_news_doc, "w")
-        data = ""
-        for file in files:
-            if file[0:4] != "news":
-                continue
-            file = "/".join([self.path_news, file])
-            for text in open(file, "r"):
-                lines = sent_tokenize(text)
-                for line in lines:
-                    cur_line = ""
-                    words = word_tokenize(line)
-                    for word in words:
-                        word = self.word_transform(word)
-                        if word not in word2idx:
-                            word = "<UNK>"
-                        cur_line = " ".join((cur_line, str(word2idx[word])))
-                    data = "\n".join((data, cur_line))
-                if len(data) > 100000:
-                    f.write(data)
-                    data = ""
-            print("finished", file)
-            # break
-        f.write(data)
-        f.close()
-
-        f = open(self.path_news_dict, "w")
-        for word, cnt in word2cnt:
-            f.write(word)
-            f.write("\t")
-            f.write(str(cnt))
-            f.write("\n")
-        f.close()
-
-
-
-if __name__ == '__main__':
-    ddd = DataProvider(0, negative_sampling=True)
-    if True: #for yelp
-        ddd.temp_yelp2()
-    if False: #for news
-        print(ddd.path_news_doc)
-        # ddd.temp_yelp()
-        ddd.temp_news()
-        # np.save("cor_matrix", ddd.cor_matrix)

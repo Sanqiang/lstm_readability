@@ -62,7 +62,7 @@ logging = tf.logging
 flags.DEFINE_string(
     "model", "small",
     "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/yelp/", # "/Users/zhaosanqiang916/data/simple-examples/data/" "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/"
+flags.DEFINE_string("data_path", "/home/sanqiang/data/yelp/", # "/Users/zhaosanqiang916/data/simple-examples/data/" "/afs/cs.pitt.edu/usr0/zhaosanqiang/data/sample/"
                     "Where the training/test data is stored.")
 flags.DEFINE_string("save_path", "output.txt",
                     "Model output directory.")
