@@ -1,14 +1,14 @@
 import tensorflow as tf
 
 class RNN:
-    def __init__(self, vocabulary_size, hidden_units, num_steps, batch_size, time_steps, max_gradient):
+    def __init__(self, vocabulary_size, hidden_units, num_steps, batch_size, max_gradient):
         with tf.name_scope("HyperParameter"):
             self.learning_rate  = tf.placeholder(tf.float32, name="learning_rate")
 
 
         with tf.name_scope("Inputs"):
-            self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, time_steps))
-            self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, time_steps))
+            self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, num_steps))
+            self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, num_steps))
             self.init = tf.placeholder(tf.float32, name="init")
 
         with tf.name_scope("Embedding"):

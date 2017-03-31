@@ -11,7 +11,9 @@ class Config:
 
         self.batch_size = 20
         self.vocab_size = 10000
-
+        self.hidden_units = 200
+        self.num_steps = 20
+        self.batch_size = 10
 
 class Data:
     def __init__(self, conf):
@@ -21,6 +23,7 @@ class Data:
     def populate(self):
         self.word_to_id = self.read_words(self.conf.train_path)
         self.train_data = self.file_to_word_ids(self.conf.train_path, self.word_to_id)
+        self.train_data = 
 
     '''
     Helper function
