@@ -1,6 +1,7 @@
 import os
-import tensorflow as tf
 import collections
+import tensorflow as tf
+import numpy as np
 
 home = os.environ["HOME"]
 
@@ -23,7 +24,16 @@ class Data:
     def populate(self):
         self.word_to_id = self.read_words(self.conf.train_path)
         self.train_data = self.file_to_word_ids(self.conf.train_path, self.word_to_id)
-        self.train_data = 
+        # for train
+        n = len(self.train_data)
+        m = self.conf.num_steps * self.conf.batch_size
+        p = [(n + i) % m for i in range(m)].index(0)
+        self.padding_train_data = np.pad(self.padding_train_data, (0, (p + 1)), mode="constant")
+        instances = np.math.ceil((len(self.padding_train_data) - 1) / self.conf.time_steps)
+        # Context and targets are arrays of shape (total_batches x batch_size x time_steps).
+        xs = self.padding_train_data[:-1].reshape(instances // self.conf.batch_size, self.conf.batch_size, self.conf.time_steps)
+        ys = self.padding_train_data[1:].reshape(instances // self.conf.batch_size, self.conf.batch_size, self.conf.time_steps)
+        self.pair_padding_train_data = zip(xs, ys)
 
     '''
     Helper function

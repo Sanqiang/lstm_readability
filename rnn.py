@@ -9,10 +9,10 @@ class RNN:
         with tf.name_scope("Inputs"):
             self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, num_steps))
             self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, num_steps))
-            self.init = tf.placeholder(tf.float32, name="init")
+            self.init_random = tf.placeholder(tf.float32, name="init")
 
         with tf.name_scope("Embedding"):
-            self.embedding = tf.Variable(tf.random_uniform((vocabulary_size, hidden_units), -self.init, self.init),
+            self.embedding = tf.Variable(tf.random_uniform((vocabulary_size, hidden_units), -self.init_random, self.init_random),
                                          dtype=tf.float32,
                                          name="embedding")
             self.embedded_input = tf.nn.embedding_lookup(self.embedding, self.inputs, name="embedded_input")
@@ -55,3 +55,24 @@ class RNN:
 
         self.initialize = tf.initialize_all_variables()
         self.summary = tf.merge_all_summaries()
+
+
+    def train(self, data, init, save_path):
+        sv = tf.train.Supervisor(logdir=save_path)
+        with sv.managed_session() as session:
+            session.run(self.initialize, feed_dict={self.init_random: init})
+            for pair in data.pair_padding_train_data():
+                if True: #start document
+                    state = session.run(self.reset_state)
+                _, cost, state, iteration = session.run(
+                    [self.train_step, self.cost, self.next_state, self.iteration],
+                    feed_dict={
+                        self.input: pair[0],
+                        self.targets: pair[1],
+                        self.state: state,
+                        self.learning_rate: 0.001,
+                        })
+        print("Saving model to %s." % save_path)
+        sv.saver.save(session, save_path, global_step=sv.global_step)
+
+        return None
