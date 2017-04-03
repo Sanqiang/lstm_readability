@@ -40,6 +40,8 @@ class Data:
     '''
     Helper function
     '''
+
+
     def read_words(self, filename):
         with tf.gfile.GFile(filename, "r") as f:
             return [w for w in (f.read().decode("utf-8") .replace("\n", "<eos>").split())]
