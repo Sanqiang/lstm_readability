@@ -2,13 +2,16 @@ import os
 import collections
 import tensorflow as tf
 import numpy as np
+from nltk.tokenize import sent_tokenize, word_tokenize
+import json
+import pickle
 
 home = os.environ["HOME"]
 
 class Config:
     def __init__(self):
         data_path = "/".join([home, "data/yelp"])
-        self.train_path = os.path.join(data_path, "review_sample.json")
+        self.train_path = os.path.join(data_path, "review.json")
 
         self.batch_size = 20
         self.vocab_size = 10000
@@ -19,11 +22,21 @@ class Config:
         self.init_random = .6
 
 class Data:
+
+
     def __init__(self, conf):
         self.conf = conf
         self.populate()
 
     def populate(self):
+        if os.path.exists("pickle"):
+            word2idx, idx2words, xs, ys = pickle.load("pickle")
+            return  word2idx, idx2words, xs, ys
+        word2idx, idx2words, xs, ys = self.build_vocab()
+        pickle.dump([word2idx, idx2words, xs, ys], open("pickle", "wb"))
+
+
+        '''
         self.word_to_id = self.build_vocab(self.conf.train_path)
         self.train_data = self.file_to_word_ids(self.conf.train_path, self.word_to_id)
         # for train
@@ -36,11 +49,57 @@ class Data:
         xs = self.padding_train_data[:-1].reshape(instances // self.conf.batch_size, self.conf.batch_size, self.conf.num_steps)
         ys = self.padding_train_data[1:].reshape(instances // self.conf.batch_size, self.conf.batch_size, self.conf.num_steps)
         self.pair_padding_train_data = zip(xs, ys)
+        '''
 
     '''
     Helper function
     '''
+    def build_vocab(self):
+        counter = collections.Counter()
+        f = open(self.conf.train_path, encoding="utf-8")
+        nsents = []
+        for line in f:
+            obj = json.loads(line)
+            text = obj["text"]
+            for sent in sent_tokenize(text):
+                nsent = []
+                for word in word_tokenize(sent):
+                    word = self.transform_word(word)
+                    nsent.append(word)
+                counter.update(nsent)
+                nsents.append(nsent)
 
+        counter = counter.most_common(self.conf.vocab_size)
+        idx2words = list(zip(*counter))
+        word2idx = dict(zip(idx2words, range(len(idx2words))))
+
+        xs = []
+        ys = []
+        for nsent in nsents:
+            nsent_filter = []
+            for word in nsent:
+                if word in word2idx:
+                    nsent_filter.append(word)
+
+            xs.append(nsent_filter[:-1])
+            ys.append(nsent_filter[1:])
+
+        del nsents
+
+        return word2idx, idx2words, xs, ys
+
+
+    def transform_word(self, word):
+        if len(word) > 0:
+            if not word[0].isalpha():
+                word = word[1:]
+            if len(word) > 0 and not word[-1].isalpha():
+                word = word[:-1]
+        return word
+
+
+    '''
+        deprecated
 
     def read_words(self, filename):
         with tf.gfile.GFile(filename, "r") as f:
@@ -68,12 +127,6 @@ class Data:
       data = self.read_words(filename)
       return [word_to_id[word] for word in data if word in word_to_id]
 
-    def transform_word(self, word):
-        if len(word) > 0:
-            if not word[0].isalpha():
-                word = word[1:]
-            if not word[-1].isalpha():
-                word = word[:-1]
-        return word
 
 
+'''
