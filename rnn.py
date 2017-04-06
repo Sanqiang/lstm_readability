@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 import inspect
 
 class RNN:
@@ -19,8 +20,10 @@ class RNN:
             self.learning_rate  = tf.placeholder(tf.float32, name="learning_rate")
 
         with tf.name_scope("Inputs"):
-            self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, num_steps))
-            self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, num_steps))
+            # self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, num_steps))
+            # self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, num_steps))
+            self.inputs = tf.placeholder(tf.int32, name="inputs", shape=( num_steps))
+            self.targets = tf.placeholder(tf.int32, name="targets", shape=( num_steps))
             self.init_random = tf.placeholder(tf.float32, name="init")
 
         with tf.name_scope("Embedding"):
@@ -80,13 +83,13 @@ class RNN:
             state = session.run(self.initial_state)
 
             session.run(self.initialize, feed_dict={self.init_random: self.config.init_random})
-            for pair in self.data.pair_padding_train_data:
+            for x, y in zip(self.data.xs, self.data.ys):
 
                 _, cost, state, iteration = session.run(
                     [self.train_step, self.cost, self.final_state, self.iteration],
                     feed_dict={
-                        self.inputs: pair[0],
-                        self.targets: pair[1],
+                        self.inputs: x,
+                        self.targets: y,
                         self.initial_state: state,
                         self.learning_rate: 0.001,
                     })

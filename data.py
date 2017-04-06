@@ -11,12 +11,12 @@ home = os.environ["HOME"]
 class Config:
     def __init__(self):
         data_path = "/".join([home, "data/yelp"])
-        self.train_path = os.path.join(data_path, "review.json")
+        self.train_path = os.path.join(data_path, "review_sample.json")
 
-        self.batch_size = 20
+        self.batch_size = 1
         self.vocab_size = 10000
         self.hidden_units = 200
-        self.num_steps = 20
+        self.num_steps = 10
         self.batch_size = 10
         self.max_gradient = 5.0
         self.init_random = .6
@@ -30,10 +30,10 @@ class Data:
 
     def populate(self):
         if os.path.exists("pickle"):
-            word2idx, idx2words, xs, ys = pickle.load("pickle")
-            return  word2idx, idx2words, xs, ys
-        word2idx, idx2words, xs, ys = self.build_vocab()
-        pickle.dump([word2idx, idx2words, xs, ys], open("pickle", "wb"))
+            self.word2idx, self.idx2words, self.xs, self.ys = pickle.load(open("pickle", "rb"))
+        else:
+            self.word2idx, self.idx2words, self.xs, self.ys = self.build_vocab()
+            pickle.dump([self.word2idx, self.idx2words, self.xs, self.ys], open("pickle", "wb"))
 
 
         '''
@@ -70,7 +70,7 @@ class Data:
                 nsents.append(nsent)
 
         counter = counter.most_common(self.conf.vocab_size)
-        idx2words = list(zip(*counter))
+        idx2words = list(zip(*counter))[0]
         word2idx = dict(zip(idx2words, range(len(idx2words))))
 
         xs = []
@@ -79,10 +79,12 @@ class Data:
             nsent_filter = []
             for word in nsent:
                 if word in word2idx:
-                    nsent_filter.append(word)
+                    nsent_filter.append(word2idx[word])
 
-            xs.append(nsent_filter[:-1])
-            ys.append(nsent_filter[1:])
+
+
+            xs.append(np.pad(nsent_filter[:-1],(0, max(0, self.conf.num_steps-len(nsent_filter[:-1]))), 'constant'))
+            ys.append(np.pad(nsent_filter[1:],(0,max(0, self.conf.num_steps-len(nsent_filter[1:]))), 'constant'))
 
         del nsents
 
