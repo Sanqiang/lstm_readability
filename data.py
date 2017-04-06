@@ -6,6 +6,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 import json
 import pickle
 
+
 home = os.environ["HOME"]
 
 class Config:
@@ -17,7 +18,7 @@ class Config:
         self.vocab_size = 10000
         self.hidden_units = 200
         self.num_steps = 10
-        self.batch_size = 10
+        self.batch_size = 20
         self.max_gradient = 5.0
         self.init_random = .6
 
@@ -51,6 +52,23 @@ class Data:
         self.pair_padding_train_data = zip(xs, ys)
         '''
 
+    def get_data(self):
+        xs = np.zeros((self.conf.batch_size, self.conf.num_steps))
+        ys = np.zeros((self.conf.batch_size, self.conf.num_steps))
+        batch_idx = 0
+        while True:
+            for x, y in zip(self.xs, self.ys):
+                x = np.pad(x, (0, max(0, self.conf.num_steps - len(x))), "constant")
+                y = np.pad(y, (0, max(0, self.conf.num_steps - len(y))), "constant")
+                xs[batch_idx] = x[:self.conf.num_steps]
+                ys[batch_idx] = y[:self.conf.num_steps]
+                batch_idx += 1
+                if len(xs) == self.conf.batch_size:
+                    yield xs, ys
+                    xs = np.zeros((self.conf.batch_size, self.conf.num_steps))
+                    ys = np.zeros((self.conf.batch_size, self.conf.num_steps))
+                    batch_idx = 0
+
     '''
     Helper function
     '''
@@ -81,15 +99,14 @@ class Data:
                 if word in word2idx:
                     nsent_filter.append(word2idx[word])
 
-
-
-            xs.append(np.pad(nsent_filter[:-1],(0, max(0, self.conf.num_steps-len(nsent_filter[:-1]))), 'constant'))
-            ys.append(np.pad(nsent_filter[1:],(0,max(0, self.conf.num_steps-len(nsent_filter[1:]))), 'constant'))
+            xs.append(nsent_filter[:-1])
+            ys.append(nsent_filter[1:])
+            # xs.append(np.pad(nsent_filter[:-1],(0, max(0, self.conf.num_steps-len(nsent_filter[:-1]))), 'constant'))
+            # ys.append(np.pad(nsent_filter[1:],(0,max(0, self.conf.num_steps-len(nsent_filter[1:]))), 'constant'))
 
         del nsents
 
         return word2idx, idx2words, xs, ys
-
 
     def transform_word(self, word):
         if len(word) > 0:
@@ -98,7 +115,6 @@ class Data:
             if len(word) > 0 and not word[-1].isalpha():
                 word = word[:-1]
         return word
-
 
     '''
         deprecated

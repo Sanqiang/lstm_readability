@@ -20,10 +20,8 @@ class RNN:
             self.learning_rate  = tf.placeholder(tf.float32, name="learning_rate")
 
         with tf.name_scope("Inputs"):
-            # self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, num_steps))
-            # self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, num_steps))
-            self.inputs = tf.placeholder(tf.int32, name="inputs", shape=( num_steps))
-            self.targets = tf.placeholder(tf.int32, name="targets", shape=( num_steps))
+            self.inputs = tf.placeholder(tf.int32, name="inputs", shape=(batch_size, num_steps))
+            self.targets = tf.placeholder(tf.int32, name="targets", shape=(batch_size, num_steps))
             self.init_random = tf.placeholder(tf.float32, name="init")
 
         with tf.name_scope("Embedding"):
@@ -83,8 +81,10 @@ class RNN:
             state = session.run(self.initial_state)
 
             session.run(self.initialize, feed_dict={self.init_random: self.config.init_random})
-            for x, y in zip(self.data.xs, self.data.ys):
+            it = iter(self.data.get_data())
 
+            while True:
+                x, y = next(it)
                 _, cost, state, iteration = session.run(
                     [self.train_step, self.cost, self.final_state, self.iteration],
                     feed_dict={
@@ -93,5 +93,6 @@ class RNN:
                         self.initial_state: state,
                         self.learning_rate: 0.001,
                     })
+                # print("\one mini-batch\n")
             print("Saving model to %s." % save_path)
             sv.saver.save(session, save_path, global_step=sv.global_step)
