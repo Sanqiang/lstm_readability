@@ -12,7 +12,7 @@ home = os.environ["HOME"]
 class Config:
     def __init__(self):
         data_path = "/".join([home, "data/yelp"])
-        self.train_path = os.path.join(data_path, "review_sample.json")
+        self.train_path = os.path.join(data_path, "review.json")
 
         self.batch_size = 1
         self.vocab_size = 10000
